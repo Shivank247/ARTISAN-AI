@@ -1,0 +1,80 @@
+.onboarding-page {
+  min-height: 100vh;
+  background: #f6f4ef;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 20px;
+}
+
+.onboarding-card {
+  width: 100%;
+  max-width: 520px;
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+}
+
+.onboarding-logo {
+  color: #8b5e3c;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 35px;
+}
+
+.onboarding-heading h1 {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.onboarding-heading p {
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #8b5e3c;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.start-btn {
+  width: 100%;
+  padding: 15px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #8b5e3c;
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}

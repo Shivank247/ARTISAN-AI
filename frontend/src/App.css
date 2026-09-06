@@ -1,0 +1,142 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #f6f4ef;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 20px;
+}
+
+.language-card {
+  width: 100%;
+  max-width: 520px;
+  background: white;
+  padding: 35px;
+  border-radius: 20px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #8b5e3c;
+  margin-bottom: 30px;
+}
+
+.logo span {
+  font-size: 28px;
+}
+
+.logo h1 {
+  font-size: 28px;
+}
+
+.welcome-section {
+  margin-bottom: 25px;
+}
+
+.welcome-section h2 {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.welcome-section p {
+  color: #666;
+  font-size: 15px;
+}
+
+.language-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.language-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.2s ease;
+}
+
+.language-btn:hover {
+  border-color: #8b5e3c;
+  transform: translateY(-2px);
+}
+
+.language-btn.selected {
+  border: 2px solid #8b5e3c;
+  background: #fff8f2;
+}
+
+.flag {
+  font-size: 26px;
+}
+
+.language-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.language-btn strong {
+  font-size: 16px;
+}
+
+.language-btn small {
+  color: #777;
+  font-size: 12px;
+}
+
+.continue-btn {
+  width: 100%;
+  margin-top: 25px;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  background: #8b5e3c;
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.continue-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.continue-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+@media (max-width: 500px) {
+  .language-card {
+    padding: 25px 20px;
+  }
+
+  .language-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-section h2 {
+    font-size: 26px;
+  }
+}
