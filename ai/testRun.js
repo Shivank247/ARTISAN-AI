@@ -10,7 +10,7 @@ async function main() {
     image: imageBase64,
     transcript: "This is a handmade clay pot I made in three days.",
     language: "en",
-    artisanAnswers: {}
+    artisanAnswers: { suggestedPrice: 900 }
   });
 
   console.log(JSON.stringify(result, null, 2));

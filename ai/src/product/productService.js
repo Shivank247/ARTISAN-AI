@@ -1,6 +1,7 @@
 const GeminiProvider = require("../providers/geminiProvider");
 const MockProvider = require("../providers/mockProvider");
 const { validateProductOutput } = require("../validation/productSchema");
+const { generateQuestions } = require("./questionGenerator");
 
 function getProvider() {
   const providerName = process.env.AI_PROVIDER;
@@ -39,7 +40,8 @@ async function generateProduct(input) {
     };
   }
 
-  return { success: true, data: validation.data };
+  const questions = generateQuestions(validation.data);
+  return { success: true, data: validation.data, questions };
 }
 
 module.exports = { generateProduct };
