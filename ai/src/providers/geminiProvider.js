@@ -20,8 +20,11 @@ Artisan answers so far: ${JSON.stringify(artisanAnswers || {})}
 Rules:
 - Only use facts supported by the image or the transcript.
 - Never invent material, origin, certifications, awards, or history.
+- If no transcript is provided, treat the image as visually suggestive only, not confirmed.
+- Do NOT assert a specific material (e.g. "terracotta", "cotton", "teak wood") unless the transcript or artisan answers confirm it. If only the image is available and material is not visually unambiguous, set material to null.
+- Do NOT state production methods (e.g. "made on a potter's wheel", "hand-stitched") unless confirmed by the transcript or artisan answers.
+- Lower confidence (below 0.6) when material or method claims rely on image alone without transcript confirmation.
 - If a field is not clearly supported, set it to null.
-- Return ONLY valid JSON, no extra text, matching exactly this shape:
 {
   "title": "string",
   "description": "string",
