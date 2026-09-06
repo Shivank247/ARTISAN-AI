@@ -1,6 +1,34 @@
+import { useState } from "react";
 import "./Dashboard.css";
+import VoiceInput from "./VoiceInput";
+import AICatalogue from "./AICatalogue";
 
-function Dashboard({ artisanData }) {
+function Dashboard({
+  artisanData,
+  onUpload,
+  onPriceRecommendation,
+}) {
+  const [currentPage, setCurrentPage] = useState("dashboard");
+
+  // Voice Input page
+  if (currentPage === "voice") {
+    return (
+      <VoiceInput
+        onBack={() => setCurrentPage("dashboard")}
+        onContinue={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
+  // AI Catalogue page
+  if (currentPage === "catalogue") {
+    return (
+      <AICatalogue
+        onBack={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
   return (
     <div className="dashboard-page">
       <header className="dashboard-header">
@@ -30,34 +58,47 @@ function Dashboard({ artisanData }) {
         </section>
 
         <section className="dashboard-grid">
+          {/* Add Product */}
           <div className="dashboard-card primary-card">
             <div className="card-icon">📸</div>
             <h3>Add a Product</h3>
             <p>
               Upload a photo and let AI help create your product catalogue.
             </p>
-            <button>Upload Product →</button>
+            <button onClick={onUpload}>Upload Product →</button>
           </div>
 
+          {/* Voice Input */}
           <div className="dashboard-card">
             <div className="card-icon">🎙️</div>
             <h3>Voice Input</h3>
             <p>Describe your product using your voice.</p>
-            <button>Start Speaking →</button>
+
+            <button onClick={() => setCurrentPage("voice")}>
+              Start Speaking →
+            </button>
           </div>
 
+          {/* AI Catalogue */}
           <div className="dashboard-card">
             <div className="card-icon">✨</div>
             <h3>AI Catalogue</h3>
             <p>Generate product titles and descriptions using AI.</p>
-            <button>Generate →</button>
+
+            <button onClick={() => setCurrentPage("catalogue")}>
+              Generate →
+            </button>
           </div>
 
+          {/* AI Price Recommendation */}
           <div className="dashboard-card">
             <div className="card-icon">💰</div>
             <h3>AI Price Recommendation</h3>
             <p>Get an estimated price recommendation for your product.</p>
-            <button>Get Price →</button>
+
+            <button onClick={onPriceRecommendation}>
+              Get Price →
+            </button>
           </div>
         </section>
 

@@ -3,11 +3,14 @@ import "./App.css";
 
 import Onboarding from "./pages/artisan/Onboarding";
 import Dashboard from "./pages/artisan/Dashboard";
+import UploadProduct from "./pages/artisan/UploadProduct";
+import PriceRecommendation from "./pages/artisan/PriceRecommendation";
 
 function App() {
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [currentPage, setCurrentPage] = useState("language");
   const [artisanData, setArtisanData] = useState(null);
+  const [productImage, setProductImage] = useState(null);
 
   const languages = [
     { name: "English", native: "English", icon: "🇬🇧" },
@@ -38,8 +41,34 @@ function App() {
     );
   }
 
+  if (currentPage === "upload") {
+    return (
+      <UploadProduct
+        onBack={() => setCurrentPage("dashboard")}
+        onContinue={(image) => {
+          setProductImage(image);
+          alert("Product image uploaded successfully!");
+        }}
+      />
+    );
+  }
+
+  if (currentPage === "price") {
+    return (
+      <PriceRecommendation
+        onBack={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
   if (currentPage === "dashboard") {
-    return <Dashboard artisanData={artisanData} />;
+    return (
+      <Dashboard
+        artisanData={artisanData}
+        onUpload={() => setCurrentPage("upload")}
+        onPriceRecommendation={() => setCurrentPage("price")}
+      />
+    );
   }
 
   return (
