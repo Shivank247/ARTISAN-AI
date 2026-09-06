@@ -1,126 +1,626 @@
-const { parseSearchQuery } = require("./searchParser");
+/**
+ * Search Tests
+ *
+ * IMPORTANT:
+ * The products array in this file is TEST DATA ONLY.
+ *
+ * Production search must receive real products
+ * from the backend/database.
+ *
+ * These tests verify:
+ * - Natural-language parsing
+ * - Multi-word Indian states
+ * - Price filters
+ * - Category filters
+ * - Search filtering
+ * - Empty results
+ * - No fictional products
+ * - Catalogue immutability
+ */
+
+const assert = require("assert");
+
 const {
-  filterProducts,
-  buildSearchResponse
+  parseSearchQuery
+} = require("./searchParser");
+
+const {
+  filterProducts
 } = require("./searchService");
 
 /*
- * Demo catalogue ONLY for local testing.
+ * ============================================================
+ * TEST-ONLY PRODUCT CATALOGUE
+ * ============================================================
  *
- * These are not AI-generated results.
- * They represent products that already exist
- * in a catalogue/database.
+ * DO NOT USE THIS ARRAY IN PRODUCTION.
  */
 
 const products = [
   {
     id: 1,
-    title: "Traditional Madhubani Painting",
-    state: "Bihar",
+    title: "Madhubani Painting",
+    description:
+      "Traditional handmade Madhubani painting",
+    material: "Natural colors",
     category: "painting",
+    state: "Bihar",
     price: 899,
-    material: "Handmade paper",
-    description: "Traditional handmade Madhubani art",
-    tags: ["traditional", "handmade", "art", "gift"]
+    tags: [
+      "traditional",
+      "handmade",
+      "madhubani"
+    ]
   },
+
   {
     id: 2,
     title: "Handmade Clay Pot",
-    state: "Bihar",
-    category: "pottery",
-    price: 450,
+    description:
+      "Traditional handmade clay pottery",
     material: "Clay",
-    description: "Handmade traditional pottery",
-    tags: ["handmade", "traditional", "home decor"]
+    category: "pottery",
+    state: "Bihar",
+    price: 450,
+    tags: [
+      "traditional",
+      "handmade",
+      "pottery"
+    ]
   },
+
   {
     id: 3,
     title: "Handwoven Textile",
-    state: "West Bengal",
-    category: "textile",
-    price: 1200,
+    description:
+      "Traditional handwoven textile",
     material: "Cotton",
-    description: "Traditional handwoven textile",
-    tags: ["handwoven", "traditional"]
+    category: "textile",
+    state: "West Bengal",
+    price: 1200,
+    tags: [
+      "traditional",
+      "handwoven",
+      "textile"
+    ]
+  },
+
+  {
+    id: 4,
+    title: "Uttar Pradesh Wooden Craft",
+    description:
+      "Traditional handmade wooden craft",
+    material: "Wood",
+    category: "handicraft",
+    state: "Uttar Pradesh",
+    price: 750,
+    tags: [
+      "traditional",
+      "handmade",
+      "wood"
+    ]
+  },
+
+  {
+    id: 5,
+    title: "Madhya Pradesh Handicraft",
+    description:
+      "Traditional handmade handicraft",
+    material: "Wood",
+    category: "handicraft",
+    state: "Madhya Pradesh",
+    price: 950,
+    tags: [
+      "traditional",
+      "handmade"
+    ]
   }
 ];
 
 /*
- * Test query
+ * ============================================================
+ * TEST RUNNER
+ * ============================================================
  */
-const query =
-  "Show me traditional handmade gifts from Bihar under ₹1000";
 
-/*
- * Step 1:
- * Convert natural language into filters.
- */
-const parsed = parseSearchQuery(query);
+let passed = 0;
+let failed = 0;
 
-console.log("\n========== PARSED QUERY ==========\n");
+function test(
+  name,
+  testFunction
+) {
+  try {
+    testFunction();
 
-console.log(JSON.stringify(parsed, null, 2));
+    console.log(
+      `✓ ${name}`
+    );
 
-if (!parsed.success) {
-  console.error("Search parsing failed.");
-  process.exit(1);
+    passed++;
+  } catch (error) {
+    console.error(
+      `✗ ${name}`
+    );
+
+    console.error(
+      `  ${error.message}`
+    );
+
+    failed++;
+  }
 }
 
 /*
- * Step 2:
- * Use the filters against REAL catalogue data.
+ * ============================================================
+ * TEST 1
+ * Bihar + under ₹1000
+ * ============================================================
  */
-const matchingProducts = filterProducts(
-  products,
-  parsed.filters
+
+test(
+  "Bihar products under ₹1000",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "Show me traditional handmade products from Bihar under ₹1000"
+      );
+
+    assert.strictEqual(
+      filters.state,
+      "Bihar"
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    assert.strictEqual(
+      results.length,
+      2
+    );
+
+    assert(
+      results.every(
+        product =>
+          product.state ===
+            "Bihar" &&
+          product.price <= 1000
+      )
+    );
+  }
 );
 
 /*
- * Step 3:
- * Build final response.
+ * ============================================================
+ * TEST 2
+ * West Bengal
+ * ============================================================
  */
-const response = buildSearchResponse(
-  parsed.filters,
-  matchingProducts
-);
 
-console.log("\n========== SEARCH RESULTS ==========\n");
+test(
+  "West Bengal must be treated as one state",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "Show me handmade products from West Bengal"
+      );
 
-console.log(JSON.stringify(response, null, 2));
-console.log("\n========== ADDITIONAL SEARCH TESTS ==========\n");
-
-const testQueries = [
-  "handmade products from Bihar under ₹500",
-  "traditional paintings from Bihar",
-  "pottery above ₹300",
-  "handmade products between ₹400 and ₹1000",
-  "show me textile products from West Bengal",
-  "find traditional gifts under Rs 1500"
-];
-
-for (const testQuery of testQueries) {
-  console.log("\n----------------------------------------");
-  console.log("QUERY:", testQuery);
-  console.log("----------------------------------------");
-
-  const result = parseSearchQuery(testQuery);
-
-  console.log(
-    JSON.stringify(result, null, 2)
-  );
-
-  if (result.success) {
-    const matches = filterProducts(
-      products,
-      result.filters
+    assert.strictEqual(
+      filters.state,
+      "West Bengal"
     );
 
-    console.log("MATCHING PRODUCTS:", matches.length);
+    assert(
+      !filters.keywords.includes(
+        "west"
+      )
+    );
 
-    for (const product of matches) {
-      console.log(
-        `- ${product.title} | ₹${product.price}`
+    assert(
+      !filters.keywords.includes(
+        "bengal"
+      )
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
       );
-    }
+
+    assert.strictEqual(
+      results.length,
+      1
+    );
+
+    assert.strictEqual(
+      results[0].state,
+      "West Bengal"
+    );
   }
+);
+
+/*
+ * ============================================================
+ * TEST 3
+ * Uttar Pradesh
+ * ============================================================
+ */
+
+test(
+  "Uttar Pradesh must be treated as one state",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "handmade products from Uttar Pradesh"
+      );
+
+    assert.strictEqual(
+      filters.state,
+      "Uttar Pradesh"
+    );
+
+    assert(
+      !filters.keywords.includes(
+        "uttar"
+      )
+    );
+
+    assert(
+      !filters.keywords.includes(
+        "pradesh"
+      )
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    assert.strictEqual(
+      results.length,
+      1
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 4
+ * Madhya Pradesh
+ * ============================================================
+ */
+
+test(
+  "Madhya Pradesh must be treated as one state",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "traditional crafts from Madhya Pradesh"
+      );
+
+    assert.strictEqual(
+      filters.state,
+      "Madhya Pradesh"
+    );
+
+    assert(
+      !filters.keywords.includes(
+        "madhya"
+      )
+    );
+
+    assert(
+      !filters.keywords.includes(
+        "pradesh"
+      )
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    assert.strictEqual(
+      results.length,
+      1
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 5
+ * Price range
+ * ============================================================
+ */
+
+test(
+  "Price range should be parsed correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "handmade products between ₹500 and ₹1000"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    assert(
+      results.every(
+        product =>
+          product.price >=
+            500 &&
+          product.price <=
+            1000
+      )
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 6
+ * Minimum price
+ * ============================================================
+ */
+
+test(
+  "Minimum price should be parsed correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products above ₹800"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      800
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      null
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    assert(
+      results.every(
+        product =>
+          product.price >=
+          800
+      )
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 7
+ * Category
+ * ============================================================
+ */
+
+test(
+  "Category filtering should work",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "handmade painting from Bihar"
+      );
+
+    assert.strictEqual(
+      filters.category,
+      "painting"
+    );
+
+    assert.strictEqual(
+      filters.state,
+      "Bihar"
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    assert.strictEqual(
+      results.length,
+      1
+    );
+
+    assert.strictEqual(
+      results[0].category,
+      "painting"
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 8
+ * Rs price format
+ * ============================================================
+ */
+
+test(
+  "Rs price format should work",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products under Rs 1000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 9
+ * Empty query
+ * ============================================================
+ */
+
+test(
+  "Empty query should return empty filters",
+  () => {
+    const filters =
+      parseSearchQuery("");
+
+    assert.strictEqual(
+      filters.state,
+      null
+    );
+
+    assert.strictEqual(
+      filters.category,
+      null
+    );
+
+    assert.strictEqual(
+      filters.minPrice,
+      null
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      null
+    );
+
+    assert.deepStrictEqual(
+      filters.keywords,
+      []
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 10
+ * No matching products
+ * ============================================================
+ */
+
+test(
+  "No matching products should return an empty result",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "handmade products from Rajasthan"
+      );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    /*
+     * The service must return no results
+     * when the catalogue has no matching product.
+     */
+    assert.strictEqual(
+      results.length,
+      0
+    );
+
+    /*
+     * Most important:
+     * No fictional Rajasthan product
+     * should be generated.
+     */
+    assert.deepStrictEqual(
+      results,
+      []
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 11
+ * Search must not modify catalogue
+ * ============================================================
+ */
+
+test(
+  "Search must not modify the product catalogue",
+  () => {
+    const originalProducts =
+      JSON.parse(
+        JSON.stringify(
+          products
+        )
+      );
+
+    const filters =
+      parseSearchQuery(
+        "traditional products from Bihar under ₹1000"
+      );
+
+    filterProducts(
+      products,
+      filters
+    );
+
+    assert.deepStrictEqual(
+      products,
+      originalProducts
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * FINAL TEST RESULT
+ * ============================================================
+ */
+
+console.log(
+  `\n${passed}/${passed + failed} tests passed.`
+);
+
+if (failed > 0) {
+  process.exitCode = 1;
+
+  console.error(
+    "✗ Some search tests failed."
+  );
+} else {
+  console.log(
+    "✓ All search tests passed successfully."
+  );
 }

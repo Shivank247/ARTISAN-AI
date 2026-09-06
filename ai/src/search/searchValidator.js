@@ -1,85 +1,204 @@
 /**
  * Search Validator
  *
- * Validates the structured search filters produced by the AI.
+ * Validates structured search filters produced by:
+ * 1. AI-based search interpretation
+ * 2. Deterministic parser fallback
  *
- * The database must only receive validated filters.
+ * IMPORTANT:
+ * - This file validates filters only.
+ * - It does NOT search the database.
+ * - It does NOT create products.
+ * - It does NOT call an AI provider.
  */
 
-function validateSearchFilters(filters) {
+function validateSearchFilters(
+  filters
+) {
   const errors = [];
 
-  if (!filters || typeof filters !== "object") {
+  /*
+   * ============================================================
+   * FILTER OBJECT
+   * ============================================================
+   */
+
+  if (
+    !filters ||
+    typeof filters !== "object" ||
+    Array.isArray(filters)
+  ) {
     return {
       valid: false,
-      errors: ["Search filters must be an object."]
+      errors: [
+        "Search filters must be an object."
+      ]
     };
   }
 
-  // state
+  /*
+   * ============================================================
+   * STATE
+   * ============================================================
+   */
+
   if (
     filters.state !== null &&
-    filters.state !== undefined &&
-    typeof filters.state !== "string"
+    filters.state !== undefined
   ) {
-    errors.push("state must be a string or null.");
+    if (
+      typeof filters.state !==
+      "string"
+    ) {
+      errors.push(
+        "state must be a string or null."
+      );
+    } else if (
+      filters.state.trim().length === 0
+    ) {
+      errors.push(
+        "state cannot be an empty string."
+      );
+    }
   }
 
-  // category
+  /*
+   * ============================================================
+   * CATEGORY
+   * ============================================================
+   */
+
   if (
     filters.category !== null &&
-    filters.category !== undefined &&
-    typeof filters.category !== "string"
+    filters.category !== undefined
   ) {
-    errors.push("category must be a string or null.");
+    if (
+      typeof filters.category !==
+      "string"
+    ) {
+      errors.push(
+        "category must be a string or null."
+      );
+    } else if (
+      filters.category.trim().length === 0
+    ) {
+      errors.push(
+        "category cannot be an empty string."
+      );
+    }
   }
 
-  // keywords
-  if (!Array.isArray(filters.keywords)) {
-    errors.push("keywords must be an array.");
+  /*
+   * ============================================================
+   * KEYWORDS
+   * ============================================================
+   */
+
+  if (
+    !Array.isArray(
+      filters.keywords
+    )
+  ) {
+    errors.push(
+      "keywords must be an array."
+    );
   } else {
-    for (const keyword of filters.keywords) {
-      if (typeof keyword !== "string") {
-        errors.push("Every keyword must be a string.");
+    for (
+      const keyword of
+        filters.keywords
+    ) {
+      if (
+        typeof keyword !== "string"
+      ) {
+        errors.push(
+          "Every keyword must be a string."
+        );
+        break;
+      }
+
+      if (
+        keyword.trim().length === 0
+      ) {
+        errors.push(
+          "Keywords cannot contain empty strings."
+        );
         break;
       }
     }
   }
 
-  // maxPrice
+  /*
+   * ============================================================
+   * MAX PRICE
+   * ============================================================
+   */
+
   if (
     filters.maxPrice !== null &&
-    filters.maxPrice !== undefined &&
-    (
-      typeof filters.maxPrice !== "number" ||
-      !Number.isFinite(filters.maxPrice) ||
-      filters.maxPrice < 0
-    )
+    filters.maxPrice !== undefined
   ) {
-    errors.push("maxPrice must be a non-negative number or null.");
+    if (
+      typeof filters.maxPrice !==
+        "number" ||
+      !Number.isFinite(
+        filters.maxPrice
+      ) ||
+      filters.maxPrice < 0
+    ) {
+      errors.push(
+        "maxPrice must be a non-negative number or null."
+      );
+    }
   }
 
-  // minPrice
+  /*
+   * ============================================================
+   * MIN PRICE
+   * ============================================================
+   */
+
   if (
     filters.minPrice !== null &&
-    filters.minPrice !== undefined &&
-    (
-      typeof filters.minPrice !== "number" ||
-      !Number.isFinite(filters.minPrice) ||
-      filters.minPrice < 0
-    )
+    filters.minPrice !== undefined
   ) {
-    errors.push("minPrice must be a non-negative number or null.");
+    if (
+      typeof filters.minPrice !==
+        "number" ||
+      !Number.isFinite(
+        filters.minPrice
+      ) ||
+      filters.minPrice < 0
+    ) {
+      errors.push(
+        "minPrice must be a non-negative number or null."
+      );
+    }
   }
 
-  // minPrice cannot be greater than maxPrice
+  /*
+   * ============================================================
+   * PRICE RANGE
+   * ============================================================
+   */
+
   if (
-    typeof filters.minPrice === "number" &&
-    typeof filters.maxPrice === "number" &&
-    filters.minPrice > filters.maxPrice
+    typeof filters.minPrice ===
+      "number" &&
+    typeof filters.maxPrice ===
+      "number" &&
+    filters.minPrice >
+      filters.maxPrice
   ) {
-    errors.push("minPrice cannot be greater than maxPrice.");
+    errors.push(
+      "minPrice cannot be greater than maxPrice."
+    );
   }
+
+  /*
+   * ============================================================
+   * RESULT
+   * ============================================================
+   */
 
   return {
     valid: errors.length === 0,

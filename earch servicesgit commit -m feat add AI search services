@@ -1,0 +1,874 @@
+[1mdiff --git a/ai/src/search/searchParser.js b/ai/src/search/searchParser.js[m
+[1mnew file mode 100644[m
+[1mindex 0000000..4e5d3a1[m
+[1m--- /dev/null[m
+[1m+++ b/ai/src/search/searchParser.js[m
+[36m@@ -0,0 +1,397 @@[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Natural Language Search Parser[m
+[32m+[m[32m *[m
+[32m+[m[32m * Converts a customer's natural-language query[m
+[32m+[m[32m * into structured search filters.[m
+[32m+[m[32m *[m
+[32m+[m[32m * Example:[m
+[32m+[m[32m *[m
+[32m+[m[32m * "Show me traditional handmade gifts from Bihar under ₹1000"[m
+[32m+[m[32m *[m
+[32m+[m[32m * becomes:[m
+[32m+[m[32m *[m
+[32m+[m[32m * {[m
+[32m+[m[32m *   state: "Bihar",[m
+[32m+[m[32m *   maxPrice: 1000,[m
+[32m+[m[32m *   keywords: ["traditional", "handmade", "gifts"],[m
+[32m+[m[32m *   category: null[m
+[32m+[m[32m * }[m
+[32m+[m[32m */[m
+[32m+[m
+[32m+[m[32mconst { validateSearchFilters } = require("./searchValidator");[m
+[32m+[m
+[32m+[m[32mconst INDIAN_STATES = [[m
+[32m+[m[32m  "Andhra Pradesh",[m
+[32m+[m[32m  "Arunachal Pradesh",[m
+[32m+[m[32m  "Assam",[m
+[32m+[m[32m  "Bihar",[m
+[32m+[m[32m  "Chhattisgarh",[m
+[32m+[m[32m  "Goa",[m
+[32m+[m[32m  "Gujarat",[m
+[32m+[m[32m  "Haryana",[m
+[32m+[m[32m  "Himachal Pradesh",[m
+[32m+[m[32m  "Jharkhand",[m
+[32m+[m[32m  "Karnataka",[m
+[32m+[m[32m  "Kerala",[m
+[32m+[m[32m  "Madhya Pradesh",[m
+[32m+[m[32m  "Maharashtra",[m
+[32m+[m[32m  "Manipur",[m
+[32m+[m[32m  "Meghalaya",[m
+[32m+[m[32m  "Mizoram",[m
+[32m+[m[32m  "Nagaland",[m
+[32m+[m[32m  "Odisha",[m
+[32m+[m[32m  "Punjab",[m
+[32m+[m[32m  "Rajasthan",[m
+[32m+[m[32m  "Sikkim",[m
+[32m+[m[32m  "Tamil Nadu",[m
+[32m+[m[32m  "Telangana",[m
+[32m+[m[32m  "Tripura",[m
+[32m+[m[32m  "Uttar Pradesh",[m
+[32m+[m[32m  "Uttarakhand",[m
+[32m+[m[32m  "West Bengal",[m
+[32m+[m[32m  "Delhi"[m
+[32m+[m[32m];[m
+[32m+[m
+[32m+[m[32mconst PRODUCT_CATEGORIES = [[m
+[32m+[m[32m  "painting",[m
+[32m+[m[32m  "paintings",[m
+[32m+[m[32m  "pottery",[m
+[32m+[m[32m  "textile",[m
+[32m+[m[32m  "textiles",[m
+[32m+[m[32m  "jewellery",[m
+[32m+[m[32m  "jewelry",[m
+[32m+[m[32m  "handicraft",[m
+[32m+[m[32m  "handicrafts",[m
+[32m+[m[32m  "woodwork",[m
+[32m+[m[32m  "basket",[m
+[32m+[m[32m  "baskets",[m
+[32m+[m[32m  "clothing",[m
+[32m+[m[32m  "decor",[m
+[32m+[m[32m  "decoration",[m
+[32m+[m[32m  "sculpture",[m
+[32m+[m[32m  "sculptures",[m
+[32m+[m[32m  "embroidery",[m
+[32m+[m[32m  "weaving",[m
+[32m+[m[32m  "ceramic",[m
+[32m+[m[32m  "ceramics"[m
+[32m+[m[32m];[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Clean and normalize the customer query.[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction normalizeQuery(query) {[m
+[32m+[m[32m  if (typeof query !== "string") {[m
+[32m+[m[32m    throw new Error("Search query must be a string.");[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return query[m
+[32m+[m[32m    .trim()[m
+[32m+[m[32m    .replace(/\s+/g, " ");[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Convert Indian price formats into a number.[m
+[32m+[m[32m *[m
+[32m+[m[32m * Examples:[m
+[32m+[m[32m * ₹1000      -> 1000[m
+[32m+[m[32m * Rs 1000    -> 1000[m
+[32m+[m[32m * INR 1000   -> 1000[m
+[32m+[m[32m * 1,000      -> 1000[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction extractPriceValue(value) {[m
+[32m+[m[32m  if (!value) {[m
+[32m+[m[32m    return null;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const cleaned = String(value)[m
+[32m+[m[32m    .replace(/₹/g, "")[m
+[32m+[m[32m    .replace(/rs\.?/gi, "")[m
+[32m+[m[32m    .replace(/inr/gi, "")[m
+[32m+[m[32m    .replace(/,/g, "")[m
+[32m+[m[32m    .trim();[m
+[32m+[m
+[32m+[m[32m  const number = Number(cleaned);[m
+[32m+[m
+[32m+[m[32m  return Number.isFinite(number) && number >= 0[m
+[32m+[m[32m    ? number[m
+[32m+[m[32m    : null;[m
+[32m+[m[32m}[m
+[32m+[m[32mfunction extractPriceRange(query) {[m
+[32m+[m[32m  const patterns = [[m
+[32m+[m[32m    /between\s*(?:₹|rs\.?|inr)?\s*([\d,]+)\s*(?:and|-|to)\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m
+[32m+[m[32m    /(?:₹|rs\.?|inr)?\s*([\d,]+)\s*(?:to|-)\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i[m
+[32m+[m[32m  ];[m
+[32m+[m
+[32m+[m[32m  for (const pattern of patterns) {[m
+[32m+[m[32m    const match = query.match(pattern);[m
+[32m+[m
+[32m+[m[32m    if (match) {[m
+[32m+[m[32m      const firstPrice = extractPriceValue(match[1]);[m
+[32m+[m[32m      const secondPrice = extractPriceValue(match[2]);[m
+[32m+[m
+[32m+[m[32m      if ([m
+[32m+[m[32m        firstPrice !== null &&[m
+[32m+[m[32m        secondPrice !== null[m
+[32m+[m[32m      ) {[m
+[32m+[m[32m        return {[m
+[32m+[m[32m          minPrice: Math.min(firstPrice, secondPrice),[m
+[32m+[m[32m          maxPrice: Math.max(firstPrice, secondPrice)[m
+[32m+[m[32m        };[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return {[m
+[32m+[m[32m    minPrice: null,[m
+[32m+[m[32m    maxPrice: null[m
+[32m+[m[32m  };[m
+[32m+[m[32m}[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Extract maximum price.[m
+[32m+[m[32m *[m
+[32m+[m[32m * Examples:[m
+[32m+[m[32m * under ₹1000[m
+[32m+[m[32m * below Rs 500[m
+[32m+[m[32m * less than 1500[m
+[32m+[m[32m * within INR 2000[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction extractMaxPrice(query) {[m
+[32m+[m[32m  const patterns = [[m
+[32m+[m[32m    /under\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m[32m    /below\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m[32m    /less\s+than\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m[32m    /upto\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m[32m    /up\s+to\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m[32m    /within\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m[32m    /maximum\s*(?:price)?\s*(?:of)?\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i[m
+[32m+[m[32m  ];[m
+[32m+[m
+[32m+[m[32m  for (const pattern of patterns) {[m
+[32m+[m[32m    const match = query.match(pattern);[m
+[32m+[m
+[32m+[m[32m    if (match) {[m
+[32m+[m[32m      return extractPriceValue(match[1]);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return null;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Extract minimum price.[m
+[32m+[m[32m *[m
+[32m+[m[32m * Examples:[m
+[32m+[m[32m * above ₹500[m
+[32m+[m[32m * over Rs 1000[m
+[32m+[m[32m * more than 700[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction extractMinPrice(query) {[m
+[32m+[m[32m  const patterns = [[m
+[32m+[m[32m    /above\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m[32m    /over\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m[32m    /more\s+than\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i,[m
+[32m+[m[32m    /minimum\s*(?:price)?\s*(?:of)?\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/i[m
+[32m+[m[32m  ];[m
+[32m+[m
+[32m+[m[32m  for (const pattern of patterns) {[m
+[32m+[m[32m    const match = query.match(pattern);[m
+[32m+[m
+[32m+[m[32m    if (match) {[m
+[32m+[m[32m      return extractPriceValue(match[1]);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return null;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Find an Indian state in the query.[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction extractState(query) {[m
+[32m+[m[32m  const lowerQuery = query.toLowerCase();[m
+[32m+[m
+[32m+[m[32m  for (const state of INDIAN_STATES) {[m
+[32m+[m[32m    if (lowerQuery.includes(state.toLowerCase())) {[m
+[32m+[m[32m      return state;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return null;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Find a likely product category.[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction extractCategory(query) {[m
+[32m+[m[32m  const lowerQuery = query.toLowerCase();[m
+[32m+[m
+[32m+[m[32m  for (const category of PRODUCT_CATEGORIES) {[m
+[32m+[m[32m    if (lowerQuery.includes(category)) {[m
+[32m+[m[32m      return category;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return null;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Extract useful keywords from the customer's query.[m
+[32m+[m[32m *[m
+[32m+[m[32m * Common search words such as "show", "me", "from", "under"[m
+[32m+[m[32m * are removed because they are not useful product keywords.[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction extractKeywords(query) {[m
+[32m+[m[32m  const stopWords = new Set([[m
+[32m+[m[32m    "show",[m
+[32m+[m[32m    "me",[m
+[32m+[m[32m    "find",[m
+[32m+[m[32m    "finds",[m
+[32m+[m[32m    "search",[m
+[32m+[m[32m    "searching",[m
+[32m+[m[32m    "for",[m
+[32m+[m[32m    "the",[m
+[32m+[m[32m    "a",[m
+[32m+[m[32m    "an",[m
+[32m+[m[32m    "from",[m
+[32m+[m[32m    "in",[m
+[32m+[m[32m    "at",[m
+[32m+[m[32m    "under",[m
+[32m+[m[32m    "below",[m
+[32m+[m[32m    "above",[m
+[32m+[m[32m    "over",[m
+[32m+[m[32m    "less",[m
+[32m+[m[32m    "than",[m
+[32m+[m[32m    "more",[m
+[32m+[m[32m    "with",[m
+[32m+[m[32m    "and",[m
+[32m+[m[32m    "or",[m
+[32m+[m[32m    "of",[m
+[32m+[m[32m    "to",[m
+[32m+[m[32m    "up",[m
+[32m+[m[32m    "within",[m
+[32m+[m[32m    "price",[m
+[32m+[m[32m    "priced",[m
+[32m+[m[32m    "products",[m
+[32m+[m[32m    "product",[m
+[32m+[m[32m    "items",[m
+[32m+[m[32m    "item",[m
+[32m+[m[32m    "please",[m
+[32m+[m[32m    "can",[m
+[32m+[m[32m    "you",[m
+[32m+[m[32m    "give",[m
+[32m+[m[32m    "want",[m
+[32m+[m[32m    "looking",[m
+[32m+[m[32m    "i",[m
+[32m+[m[32m    "am",[m
+[32m+[m[32m    "is",[m
+[32m+[m[32m    "are",[m
+[32m+[m[32m    "₹"[m
+[32m+[m[32m  ]);[m
+[32m+[m
+[32m+[m[32m  const words = query[m
+[32m+[m[32m    .toLowerCase()[m
+[32m+[m[32m    .replace(/[₹,!?;.()]/g, " ")[m
+[32m+[m[32m    .split(/\s+/)[m
+[32m+[m[32m    .filter(Boolean);[m
+[32m+[m
+[32m+[m[32m  const stateNames = INDIAN_STATES.map(state =>[m
+[32m+[m[32m    state.toLowerCase()[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  const categoryNames = PRODUCT_CATEGORIES.map(category =>[m
+[32m+[m[32m    category.toLowerCase()[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  const keywords = [];[m
+[32m+[m
+[32m+[m[32m  for (const word of words) {[m
+[32m+[m[32m    if (stopWords.has(word)) {[m
+[32m+[m[32m      continue;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (stateNames.includes(word)) {[m
+[32m+[m[32m      continue;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (categoryNames.includes(word)) {[m
+[32m+[m[32m      continue;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (/^\d+$/.test(word)) {[m
+[32m+[m[32m      continue;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (word.length < 2) {[m
+[32m+[m[32m      continue;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (!keywords.includes(word)) {[m
+[32m+[m[32m      keywords.push(word);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return keywords;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Main parser.[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction parseSearchQuery(query) {[m
+[32m+[m[32m  const normalizedQuery = normalizeQuery(query);[m
+[32m+[m
+[32m+[m[32m  if (!normalizedQuery) {[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      success: false,[m
+[32m+[m[32m      filters: null,[m
+[32m+[m[32m      errors: ["Search query cannot be empty."][m
+[32m+[m[32m    };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const priceRange = extractPriceRange(normalizedQuery);[m
+[32m+[m
+[32m+[m[32mconst filters = {[m
+[32m+[m[32m  state: extractState(normalizedQuery),[m
+[32m+[m
+[32m+[m[32m  minPrice:[m
+[32m+[m[32m    priceRange.minPrice !== null[m
+[32m+[m[32m      ? priceRange.minPrice[m
+[32m+[m[32m      : extractMinPrice(normalizedQuery),[m
+[32m+[m
+[32m+[m[32m  maxPrice:[m
+[32m+[m[32m    priceRange.maxPrice !== null[m
+[32m+[m[32m      ? priceRange.maxPrice[m
+[32m+[m[32m      : extractMaxPrice(normalizedQuery),[m
+[32m+[m
+[32m+[m[32m  keywords: extractKeywords(normalizedQuery),[m
+[32m+[m
+[32m+[m[32m  category: extractCategory(normalizedQuery)[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32m  const validation = validateSearchFilters(filters);[m
+[32m+[m
+[32m+[m[32m  if (!validation.valid) {[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      success: false,[m
+[32m+[m[32m      filters: null,[m
+[32m+[m[32m      errors: validation.errors[m
+[32m+[m[32m    };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return {[m
+[32m+[m[32m    success: true,[m
+[32m+[m[32m    filters,[m
+[32m+[m[32m    errors: [][m
+[32m+[m[32m  };[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mmodule.exports = {[m
+[32m+[m[32m  parseSearchQuery,[m
+[32m+[m[32m  normalizeQuery,[m
+[32m+[m[32m  extractPriceRange,[m
+[32m+[m[32m  extractMaxPrice,[m
+[32m+[m[32m  extractMinPrice,[m
+[32m+[m[32m  extractState,[m
+[32m+[m[32m  extractCategory,[m
+[32m+[m[32m  extractKeywords[m
+[32m+[m[32m};[m
+\ No newline at end of file[m
+[1mdiff --git a/ai/src/search/searchService.js b/ai/src/search/searchService.js[m
+[1mnew file mode 100644[m
+[1mindex 0000000..14cec64[m
+[1m--- /dev/null[m
+[1m+++ b/ai/src/search/searchService.js[m
+[36m@@ -0,0 +1,231 @@[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Search Service[m
+[32m+[m[32m *[m
+[32m+[m[32m * IMPORTANT:[m
+[32m+[m[32m * This service filters actual catalogue products.[m
+[32m+[m[32m *[m
+[32m+[m[32m * AI interprets the customer's query.[m
+[32m+[m[32m * The catalogue/database decides which products actually exist.[m
+[32m+[m[32m *[m
+[32m+[m[32m * Never generate fictional products here.[m
+[32m+[m[32m */[m
+[32m+[m
+[32m+[m[32mconst { validateSearchFilters } = require("./searchValidator");[m
+[32m+[m[32mfunction calculateRelevanceScore(product, filters) {[m
+[32m+[m[32m  let score = 0;[m
+[32m+[m
+[32m+[m[32m  const searchableText = [[m
+[32m+[m[32m    product.title,[m
+[32m+[m[32m    product.name,[m
+[32m+[m[32m    product.description,[m
+[32m+[m[32m    product.material,[m
+[32m+[m[32m    product.category,[m
+[32m+[m[32m    ...(Array.isArray(product.tags) ? product.tags : [])[m
+[32m+[m[32m  ][m
+[32m+[m[32m    .filter(Boolean)[m
+[32m+[m[32m    .join(" ")[m
+[32m+[m[32m    .toLowerCase();[m
+[32m+[m
+[32m+[m[32m  const title = String([m
+[32m+[m[32m    product.title || product.name || ""[m
+[32m+[m[32m  ).toLowerCase();[m
+[32m+[m
+[32m+[m[32m  // Keyword matching[m
+[32m+[m[32m  for (const keyword of filters.keywords || []) {[m
+[32m+[m[32m    const normalizedKeyword = keyword.toLowerCase();[m
+[32m+[m
+[32m+[m[32m    if (title.includes(normalizedKeyword)) {[m
+[32m+[m[32m      score += 5;[m
+[32m+[m[32m    } else if (searchableText.includes(normalizedKeyword)) {[m
+[32m+[m[32m      score += 2;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // Category match[m
+[32m+[m[32m  if (filters.category) {[m
+[32m+[m[32m    if ([m
+[32m+[m[32m      String(product.category || "")[m
+[32m+[m[32m        .toLowerCase()[m
+[32m+[m[32m        .includes(filters.category.toLowerCase())[m
+[32m+[m[32m    ) {[m
+[32m+[m[32m      score += 5;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // State match[m
+[32m+[m[32m  if (filters.state) {[m
+[32m+[m[32m    if ([m
+[32m+[m[32m      String(product.state || "")[m
+[32m+[m[32m        .toLowerCase() === filters.state.toLowerCase()[m
+[32m+[m[32m    ) {[m
+[32m+[m[32m      score += 5;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return score;[m
+[32m+[m[32m}[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Apply structured search filters to real catalogue products.[m
+[32m+[m[32m *[m
+[32m+[m[32m * Expected product shape can contain:[m
+[32m+[m[32m *[m
+[32m+[m[32m * {[m
+[32m+[m[32m *   title,[m
+[32m+[m[32m *   name,[m
+[32m+[m[32m *   state,[m
+[32m+[m[32m *   category,[m
+[32m+[m[32m *   price,[m
+[32m+[m[32m *   description,[m
+[32m+[m[32m *   material,[m
+[32m+[m[32m *   tags[m
+[32m+[m[32m * }[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction filterProducts(products, filters) {[m
+[32m+[m[32m  if (!Array.isArray(products)) {[m
+[32m+[m[32m    throw new Error("Products must be an array.");[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const validation = validateSearchFilters(filters);[m
+[32m+[m
+[32m+[m[32m  if (!validation.valid) {[m
+[32m+[m[32m    throw new Error(validation.errors.join(" "));[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const state = filters.state[m
+[32m+[m[32m    ? filters.state.toLowerCase()[m
+[32m+[m[32m    : null;[m
+[32m+[m
+[32m+[m[32m  const category = filters.category[m
+[32m+[m[32m    ? filters.category.toLowerCase()[m
+[32m+[m[32m    : null;[m
+[32m+[m
+[32m+[m[32m  const keywords = Array.isArray(filters.keywords)[m
+[32m+[m[32m    ? filters.keywords.map(keyword => keyword.toLowerCase())[m
+[32m+[m[32m    : [];[m
+[32m+[m
+[32m+[m[32m  const minPrice =[m
+[32m+[m[32m    typeof filters.minPrice === "number"[m
+[32m+[m[32m      ? filters.minPrice[m
+[32m+[m[32m      : null;[m
+[32m+[m
+[32m+[m[32m  const maxPrice =[m
+[32m+[m[32m    typeof filters.maxPrice === "number"[m
+[32m+[m[32m      ? filters.maxPrice[m
+[32m+[m[32m      : null;[m
+[32m+[m
+[32m+[m[32m  const results = products.filter(product => {[m
+[32m+[m[32m    if (!product || typeof product !== "object") {[m
+[32m+[m[32m      return false;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /*[m
+[32m+[m[32m     * STATE FILTER[m
+[32m+[m[32m     */[m
+[32m+[m[32m    if (state) {[m
+[32m+[m[32m      const productState = String(product.state || "").toLowerCase();[m
+[32m+[m
+[32m+[m[32m      if (productState !== state) {[m
+[32m+[m[32m        return false;[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /*[m
+[32m+[m[32m     * CATEGORY FILTER[m
+[32m+[m[32m     */[m
+[32m+[m[32m    if (category) {[m
+[32m+[m[32m      const productCategory = String([m
+[32m+[m[32m        product.category || ""[m
+[32m+[m[32m      ).toLowerCase();[m
+[32m+[m
+[32m+[m[32m      if (!productCategory.includes(category)) {[m
+[32m+[m[32m        return false;[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /*[m
+[32m+[m[32m     * PRICE FILTER[m
+[32m+[m[32m     */[m
+[32m+[m[32m    const price = Number(product.price);[m
+[32m+[m
+[32m+[m[32m    if (minPrice !== null) {[m
+[32m+[m[32m      if (!Number.isFinite(price) || price < minPrice) {[m
+[32m+[m[32m        return false;[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (maxPrice !== null) {[m
+[32m+[m[32m      if (!Number.isFinite(price) || price > maxPrice) {[m
+[32m+[m[32m        return false;[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /*[m
+[32m+[m[32m     * KEYWORD FILTER[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * Search across:[m
+[32m+[m[32m     * title[m
+[32m+[m[32m     * name[m
+[32m+[m[32m     * description[m
+[32m+[m[32m     * material[m
+[32m+[m[32m     * tags[m
+[32m+[m[32m     * category[m
+[32m+[m[32m     */[m
+[32m+[m[32m    if (keywords.length > 0) {[m
+[32m+[m[32m      const searchableText = [[m
+[32m+[m[32m        product.title,[m
+[32m+[m[32m        product.name,[m
+[32m+[m[32m        product.description,[m
+[32m+[m[32m        product.material,[m
+[32m+[m[32m        product.category,[m
+[32m+[m[32m        ...(Array.isArray(product.tags) ? product.tags : [])[m
+[32m+[m[32m      ][m
+[32m+[m[32m        .filter(Boolean)[m
+[32m+[m[32m        .join(" ")[m
+[32m+[m[32m        .toLowerCase();[m
+[32m+[m
+[32m+[m[32m      const matchesKeyword = keywords.some(keyword =>[m
+[32m+[m[32m        searchableText.includes(keyword)[m
+[32m+[m[32m      );[m
+[32m+[m
+[32m+[m[32m      if (!matchesKeyword) {[m
+[32m+[m[32m        return false;[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    return true;[m
+[32m+[m[32m  });[m
+[32m+[m[32m  results.sort((a, b) => {[m
+[32m+[m[32m  const scoreA = calculateRelevanceScore(a, filters);[m
+[32m+[m[32m  const scoreB = calculateRelevanceScore(b, filters);[m
+[32m+[m
+[32m+[m[32m  return scoreB - scoreA;[m
+[32m+[m[32m});[m
+[32m+[m[32m  return results;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Search result response.[m
+[32m+[m[32m *[m
+[32m+[m[32m * If no products exist, return an empty result.[m
+[32m+[m[32m * NEVER create fake products.[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction buildSearchResponse(filters, products) {[m
+[32m+[m[32m  return {[m
+[32m+[m[32m    success: true,[m
+[32m+[m[32m    filters,[m
+[32m+[m[32m    count: products.length,[m
+[32m+[m[32m    products,[m
+[32m+[m[32m    message:[m
+[32m+[m[32m      products.length === 0[m
+[32m+[m[32m        ? "No matching products found."[m
+[32m+[m[32m        : `${products.length} matching product${[m
+[32m+[m[32m            products.length === 1 ? "" : "s"[m
+[32m+[m[32m          } found.`[m
+[32m+[m[32m  };[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mmodule.exports = {[m
+[32m+[m[32m  filterProducts,[m
+[32m+[m[32m  buildSearchResponse,[m
+[32m+[m[32m  calculateRelevanceScore[m
+[32m+[m[32m};[m
+\ No newline at end of file[m
+[1mdiff --git a/ai/src/search/searchValidator.js b/ai/src/search/searchValidator.js[m
+[1mnew file mode 100644[m
+[1mindex 0000000..0ffe2ce[m
+[1m--- /dev/null[m
+[1m+++ b/ai/src/search/searchValidator.js[m
+[36m@@ -0,0 +1,92 @@[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Search Validator[m
+[32m+[m[32m *[m
+[32m+[m[32m * Validates the structured search filters produced by the AI.[m
+[32m+[m[32m *[m
+[32m+[m[32m * The database must only receive validated filters.[m
+[32m+[m[32m */[m
+[32m+[m
+[32m+[m[32mfunction validateSearchFilters(filters) {[m
+[32m+[m[32m  const errors = [];[m
+[32m+[m
+[32m+[m[32m  if (!filters || typeof filters !== "object") {[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      valid: false,[m
+[32m+[m[32m      errors: ["Search filters must be an object."][m
+[32m+[m[32m    };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // state[m
+[32m+[m[32m  if ([m
+[32m+[m[32m    filters.state !== null &&[m
+[32m+[m[32m    filters.state !== undefined &&[m
+[32m+[m[32m    typeof filters.state !== "string"[m
+[32m+[m[32m  ) {[m
+[32m+[m[32m    errors.push("state must be a string or null.");[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // category[m
+[32m+[m[32m  if ([m
+[32m+[m[32m    filters.category !== null &&[m
+[32m+[m[32m    filters.category !== undefined &&[m
+[32m+[m[32m    typeof filters.category !== "string"[m
+[32m+[m[32m  ) {[m
+[32m+[m[32m    errors.push("category must be a string or null.");[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // keywords[m
+[32m+[m[32m  if (!Array.isArray(filters.keywords)) {[m
+[32m+[m[32m    errors.push("keywords must be an array.");[m
+[32m+[m[32m  } else {[m
+[32m+[m[32m    for (const keyword of filters.keywords) {[m
+[32m+[m[32m      if (typeof keyword !== "string") {[m
+[32m+[m[32m        errors.push("Every keyword must be a string.");[m
+[32m+[m[32m        break;[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // maxPrice[m
+[32m+[m[32m  if ([m
+[32m+[m[32m    filters.maxPrice !== null &&[m
+[32m+[m[32m    filters.maxPrice !== undefined &&[m
+[32m+[m[32m    ([m
+[32m+[m[32m      typeof filters.maxPrice !== "number" ||[m
+[32m+[m[32m      !Number.isFinite(filters.maxPrice) ||[m
+[32m+[m[32m      filters.maxPrice < 0[m
+[32m+[m[32m    )[m
+[32m+[m[32m  ) {[m
+[32m+[m[32m    errors.push("maxPrice must be a non-negative number or null.");[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // minPrice[m
+[32m+[m[32m  if ([m
+[32m+[m[32m    filters.minPrice !== null &&[m
+[32m+[m[32m    filters.minPrice !== undefined &&[m
+[32m+[m[32m    ([m
+[32m+[m[32m      typeof filters.minPrice !== "number" ||[m
+[32m+[m[32m      !Number.isFinite(filters.minPrice) ||[m
+[32m+[m[32m      filters.minPrice < 0[m
+[32m+[m[32m    )[m
+[32m+[m[32m  ) {[m
+[32m+[m[32m    errors.push("minPrice must be a non-negative number or null.");[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // minPrice cannot be greater than maxPrice[m
+[32m+[m[32m  if ([m
+[32m+[m[32m    typeof filters.minPrice === "number" &&[m
+[32m+[m[32m    typeof filters.maxPrice === "number" &&[m
+[32m+[m[32m    filters.minPrice > filters.maxPrice[m
+[32m+[m[32m  ) {[m
+[32m+[m[32m    errors.push("minPrice cannot be greater than maxPrice.");[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return {[m
+[32m+[m[32m    valid: errors.length === 0,[m
+[32m+[m[32m    errors[m
+[32m+[m[32m  };[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mmodule.exports = {[m
+[32m+[m[32m  validateSearchFilters[m
+[32m+[m[32m};[m
+\ No newline at end of file[m
+[1mdiff --git a/ai/src/search/searchtest.js b/ai/src/search/searchtest.js[m
+[1mnew file mode 100644[m
+[1mindex 0000000..fbd58c7[m
+[1m--- /dev/null[m
+[1m+++ b/ai/src/search/searchtest.js[m
+[36m@@ -0,0 +1,126 @@[m
+[32m+[m[32mconst { parseSearchQuery } = require("./searchParser");[m
+[32m+[m[32mconst {[m
+[32m+[m[32m  filterProducts,[m
+[32m+[m[32m  buildSearchResponse[m
+[32m+[m[32m} = require("./searchService");[m
+[32m+[m
+[32m+[m[32m/*[m
+[32m+[m[32m * Demo catalogue ONLY for local testing.[m
+[32m+[m[32m *[m
+[32m+[m[32m * These are not AI-generated results.[m
+[32m+[m[32m * They represent products that already exist[m
+[32m+[m[32m * in a catalogue/database.[m
+[32m+[m[32m */[m
+[32m+[m
+[32m+[m[32mconst products = [[m
+[32m+[m[32m  {[m
+[32m+[m[32m    id: 1,[m
+[32m+[m[32m    title: "Traditional Madhubani Painting",[m
+[32m+[m[32m    state: "Bihar",[m
+[32m+[m[32m    category: "painting",[m
+[32m+[m[32m    price: 899,[m
+[32m+[m[32m    material: "Handmade paper",[m
+[32m+[m[32m    description: "Traditional handmade Madhubani art",[m
+[32m+[m[32m    tags: ["traditional", "handmade", "art", "gift"][m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    id: 2,[m
+[32m+[m[32m    title: "Handmade Clay Pot",[m
+[32m+[m[32m    state: "Bihar",[m
+[32m+[m[32m    category: "pottery",[m
+[32m+[m[32m    price: 450,[m
+[32m+[m[32m    material: "Clay",[m
+[32m+[m[32m    description: "Handmade traditional pottery",[m
+[32m+[m[32m    tags: ["handmade", "traditional", "home decor"][m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    id: 3,[m
+[32m+[m[32m    title: "Handwoven Textile",[m
+[32m+[m[32m    state: "West Bengal",[m
+[32m+[m[32m    category: "textile",[m
+[32m+[m[32m    price: 1200,[m
+[32m+[m[32m    material: "Cotton",[m
+[32m+[m[32m    description: "Traditional handwoven textile",[m
+[32m+[m[32m    tags: ["handwoven", "traditional"][m
+[32m+[m[32m  }[m
+[32m+[m[32m];[m
+[32m+[m
+[32m+[m[32m/*[m
+[32m+[m[32m * Test query[m
+[32m+[m[32m */[m
+[32m+[m[32mconst query =[m
+[32m+[m[32m  "Show me traditional handmade gifts from Bihar under ₹1000";[m
+[32m+[m
+[32m+[m[32m/*[m
+[32m+[m[32m * Step 1:[m
+[32m+[m[32m * Convert natural language into filters.[m
+[32m+[m[32m */[m
+[32m+[m[32mconst parsed = parseSearchQuery(query);[m
+[32m+[m
+[32m+[m[32mconsole.log("\n========== PARSED QUERY ==========\n");[m
+[32m+[m
+[32m+[m[32mconsole.log(JSON.stringify(parsed, null, 2));[m
+[32m+[m
+[32m+[m[32mif (!parsed.success) {[m
+[32m+[m[32m  console.error("Search parsing failed.");[m
+[32m+[m[32m  process.exit(1);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/*[m
+[32m+[m[32m * Step 2:[m
+[32m+[m[32m * Use the filters against REAL catalogue data.[m
+[32m+[m[32m */[m
+[32m+[m[32mconst matchingProducts = filterProducts([m
+[32m+[m[32m  products,[m
+[32m+[m[32m  parsed.filters[m
+[32m+[m[32m);[m
+[32m+[m
+[32m+[m[32m/*[m
+[32m+[m[32m * Step 3:[m
+[32m+[m[32m * Build final response.[m
+[32m+[m[32m */[m
+[32m+[m[32mconst response = buildSearchResponse([m
+[32m+[m[32m  parsed.filters,[m
+[32m+[m[32m  matchingProducts[m
+[32m+[m[32m);[m
+[32m+[m
+[32m+[m[32mconsole.log("\n========== SEARCH RESULTS ==========\n");[m
+[32m+[m
+[32m+[m[32mconsole.log(JSON.stringify(response, null, 2));[m
+[32m+[m[32mconsole.log("\n========== ADDITIONAL SEARCH TESTS ==========\n");[m
+[32m+[m
+[32m+[m[32mconst testQueries = [[m
+[32m+[m[32m  "handmade products from Bihar under ₹500",[m
+[32m+[m[32m  "traditional paintings from Bihar",[m
+[32m+[m[32m  "pottery above ₹300",[m
+[32m+[m[32m  "handmade products between ₹400 and ₹1000",[m
+[32m+[m[32m  "show me textile products from West Bengal",[m
+[32m+[m[32m  "find traditional gifts under Rs 1500"[m
+[32m+[m[32m];[m
+[32m+[m
+[32m+[m[32mfor (const testQuery of testQueries) {[m
+[32m+[m[32m  console.log("\n----------------------------------------");[m
+[32m+[m[32m  console.log("QUERY:", testQuery);[m
+[32m+[m[32m  console.log("----------------------------------------");[m
+[32m+[m
+[32m+[m[32m  const result = parseSearchQuery(testQuery);[m
+[32m+[m
+[32m+[m[32m  console.log([m
+[32m+[m[32m    JSON.stringify(result, null, 2)[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  if (result.success) {[m
+[32m+[m[32m    const matches = filterProducts([m
+[32m+[m[32m      products,[m
+[32m+[m[32m      result.filters[m
+[32m+[m[32m    );[m
+[32m+[m
+[32m+[m[32m    console.log("MATCHING PRODUCTS:", matches.length);[m
+[32m+[m
+[32m+[m[32m    for (const product of matches) {[m
+[32m+[m[32m      console.log([m
+[32m+[m[32m        `- ${product.title} | ₹${product.price}`[m
+[32m+[m[32m      );[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
