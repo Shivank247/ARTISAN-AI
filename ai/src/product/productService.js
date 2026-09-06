@@ -14,10 +14,11 @@ async function generateProduct(input) {
   const provider = getProvider();
 
   let rawOutput;
-  try {
+    try {
     rawOutput = await provider.generateProduct(input);
   } catch (err) {
-    return {
+    console.error("AI PROVIDER ERROR:", err);
+    return {   
       success: false,
       error: {
         code: "AI_SERVICE_UNAVAILABLE",

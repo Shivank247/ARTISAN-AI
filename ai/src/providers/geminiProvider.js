@@ -5,7 +5,7 @@ class GeminiProvider extends AIProvider {
   constructor(apiKey) {
     super();
     this.client = new GoogleGenerativeAI(apiKey);
-    this.model = this.client.getGenerativeModel({ model: "gemini-1.5-flash" });
+    this.model = this.client.getGenerativeModel({ model: "gemini-3.6-flash" });
   }
 
   async generateProduct({ image, transcript, language, artisanAnswers }) {
