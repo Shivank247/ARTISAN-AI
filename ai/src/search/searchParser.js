@@ -412,7 +412,7 @@ function parseSearchQuery(query) {
   };
 }
 
-module.exports = {
+export {
   parseSearchQuery,
   normalizeQuery,
   extractPriceFilters,

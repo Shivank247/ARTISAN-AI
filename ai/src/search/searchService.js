@@ -24,9 +24,9 @@
  *     Matching results
  */
 
-const {
+import {
   validateSearchFilters
-} = require("./searchValidator");
+} from "./searchValidator.js";
 
 /**
  * Calculate relevance score for an
@@ -363,7 +363,7 @@ function buildSearchResponse(
   };
 }
 
-module.exports = {
+export {
   filterProducts,
   buildSearchResponse,
   calculateRelevanceScore

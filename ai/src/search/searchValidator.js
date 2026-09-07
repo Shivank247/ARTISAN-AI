@@ -1,27 +1,16 @@
 /**
  * Search Validator
  *
- * Validates structured search filters produced by:
- * 1. AI-based search interpretation
- * 2. Deterministic parser fallback
+ * Validates structured search filters.
  *
  * IMPORTANT:
- * - This file validates filters only.
- * - It does NOT search the database.
- * - It does NOT create products.
- * - It does NOT call an AI provider.
+ * - This validator does NOT access the database.
+ * - This validator does NOT create products.
+ * - This validator does NOT interpret natural language.
  */
 
-function validateSearchFilters(
-  filters
-) {
+function validateSearchFilters(filters) {
   const errors = [];
-
-  /*
-   * ============================================================
-   * FILTER OBJECT
-   * ============================================================
-   */
 
   if (
     !filters ||
@@ -37,168 +26,111 @@ function validateSearchFilters(
   }
 
   /*
-   * ============================================================
-   * STATE
-   * ============================================================
+   * State
    */
-
   if (
     filters.state !== null &&
     filters.state !== undefined
   ) {
     if (
-      typeof filters.state !==
-      "string"
+      typeof filters.state !== "string" ||
+      filters.state.trim() === ""
     ) {
       errors.push(
-        "state must be a string or null."
-      );
-    } else if (
-      filters.state.trim().length === 0
-    ) {
-      errors.push(
-        "state cannot be an empty string."
+        "State must be a non-empty string or null."
       );
     }
   }
 
   /*
-   * ============================================================
-   * CATEGORY
-   * ============================================================
+   * Category
    */
-
   if (
     filters.category !== null &&
     filters.category !== undefined
   ) {
     if (
-      typeof filters.category !==
-      "string"
+      typeof filters.category !== "string" ||
+      filters.category.trim() === ""
     ) {
       errors.push(
-        "category must be a string or null."
-      );
-    } else if (
-      filters.category.trim().length === 0
-    ) {
-      errors.push(
-        "category cannot be an empty string."
+        "Category must be a non-empty string or null."
       );
     }
   }
 
   /*
-   * ============================================================
-   * KEYWORDS
-   * ============================================================
+   * Keywords
    */
-
   if (
-    !Array.isArray(
-      filters.keywords
-    )
+    !Array.isArray(filters.keywords)
   ) {
     errors.push(
-      "keywords must be an array."
+      "Keywords must be an array."
     );
   } else {
-    for (
-      const keyword of
-        filters.keywords
-    ) {
-      if (
-        typeof keyword !== "string"
-      ) {
-        errors.push(
-          "Every keyword must be a string."
-        );
-        break;
+    filters.keywords.forEach(
+      (keyword, index) => {
+        if (
+          typeof keyword !== "string" ||
+          keyword.trim() === ""
+        ) {
+          errors.push(
+            `Keyword at index ${index} must be a non-empty string.`
+          );
+        }
       }
-
-      if (
-        keyword.trim().length === 0
-      ) {
-        errors.push(
-          "Keywords cannot contain empty strings."
-        );
-        break;
-      }
-    }
+    );
   }
 
   /*
-   * ============================================================
-   * MAX PRICE
-   * ============================================================
+   * Minimum price
    */
-
-  if (
-    filters.maxPrice !== null &&
-    filters.maxPrice !== undefined
-  ) {
-    if (
-      typeof filters.maxPrice !==
-        "number" ||
-      !Number.isFinite(
-        filters.maxPrice
-      ) ||
-      filters.maxPrice < 0
-    ) {
-      errors.push(
-        "maxPrice must be a non-negative number or null."
-      );
-    }
-  }
-
-  /*
-   * ============================================================
-   * MIN PRICE
-   * ============================================================
-   */
-
   if (
     filters.minPrice !== null &&
     filters.minPrice !== undefined
   ) {
     if (
-      typeof filters.minPrice !==
-        "number" ||
-      !Number.isFinite(
-        filters.minPrice
-      ) ||
+      typeof filters.minPrice !== "number" ||
+      !Number.isFinite(filters.minPrice) ||
       filters.minPrice < 0
     ) {
       errors.push(
-        "minPrice must be a non-negative number or null."
+        "Minimum price must be a finite non-negative number or null."
       );
     }
   }
 
   /*
-   * ============================================================
-   * PRICE RANGE
-   * ============================================================
+   * Maximum price
    */
-
   if (
-    typeof filters.minPrice ===
-      "number" &&
-    typeof filters.maxPrice ===
-      "number" &&
-    filters.minPrice >
-      filters.maxPrice
+    filters.maxPrice !== null &&
+    filters.maxPrice !== undefined
   ) {
-    errors.push(
-      "minPrice cannot be greater than maxPrice."
-    );
+    if (
+      typeof filters.maxPrice !== "number" ||
+      !Number.isFinite(filters.maxPrice) ||
+      filters.maxPrice < 0
+    ) {
+      errors.push(
+        "Maximum price must be a finite non-negative number or null."
+      );
+    }
   }
 
   /*
-   * ============================================================
-   * RESULT
-   * ============================================================
+   * Price range
    */
+  if (
+    typeof filters.minPrice === "number" &&
+    typeof filters.maxPrice === "number" &&
+    filters.minPrice > filters.maxPrice
+  ) {
+    errors.push(
+      "Minimum price cannot be greater than maximum price."
+    );
+  }
 
   return {
     valid: errors.length === 0,
@@ -206,6 +138,6 @@ function validateSearchFilters(
   };
 }
 
-module.exports = {
+export {
   validateSearchFilters
 };

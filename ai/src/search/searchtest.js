@@ -18,15 +18,15 @@
  * - Catalogue immutability
  */
 
-const assert = require("assert");
+import assert from "node:assert";
 
-const {
+import {
   parseSearchQuery
-} = require("./searchParser");
+} from "./searchParser.js";
 
-const {
+import {
   filterProducts
-} = require("./searchService");
+} from "./searchService.js";
 
 /*
  * ============================================================
@@ -210,7 +210,7 @@ test(
   () => {
     const filters =
       parseSearchQuery(
-        "Show me handmade products from West Bengal"
+        "Show me products from West Bengal"
       );
 
     assert.strictEqual(
@@ -290,6 +290,11 @@ test(
       results.length,
       1
     );
+
+    assert.strictEqual(
+      results[0].state,
+      "Uttar Pradesh"
+    );
   }
 );
 
@@ -305,7 +310,7 @@ test(
   () => {
     const filters =
       parseSearchQuery(
-        "traditional crafts from Madhya Pradesh"
+        "Show me products from Madhya Pradesh"
       );
 
     assert.strictEqual(
@@ -334,6 +339,11 @@ test(
     assert.strictEqual(
       results.length,
       1
+    );
+
+    assert.strictEqual(
+      results[0].state,
+      "Madhya Pradesh"
     );
   }
 );
@@ -599,6 +609,88 @@ test(
     assert.deepStrictEqual(
       products,
       originalProducts
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 12
+ * Below ₹1000
+ * ============================================================
+ */
+
+test(
+  "Below ₹1000 should set maxPrice to 1000",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products below ₹1000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+
+    assert.strictEqual(
+      filters.minPrice,
+      null
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    assert(
+      results.every(
+        product =>
+          product.price <=
+          1000
+      )
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 13
+ * Over ₹500
+ * ============================================================
+ */
+
+test(
+  "Over ₹500 should set minPrice to 500",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products over ₹500"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      null
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    assert(
+      results.every(
+        product =>
+          product.price >=
+          500
+      )
     );
   }
 );
