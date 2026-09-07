@@ -134,6 +134,14 @@ function calculateRelevanceScore(
  *
  * In production this should come from the
  * backend/database layer.
+ *
+ * MVP keyword behavior:
+ * ANY keyword match is sufficient for a product
+ * to pass the keyword filter. Relevance scoring
+ * then ranks products based on matched keywords.
+ *
+ * This preserves the existing MVP behavior and
+ * avoids unnecessarily broad architectural changes.
  */
 function filterProducts(
   products,
@@ -294,6 +302,10 @@ function filterProducts(
           .join(" ")
           .toLowerCase();
 
+        /*
+         * MVP intentionally uses ANY keyword match.
+         * Ranking still rewards stronger matches.
+         */
         const matchesKeyword =
           keywords.some(keyword =>
             searchableText.includes(

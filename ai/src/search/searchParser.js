@@ -31,6 +31,7 @@ const STOP_WORDS = new Set([
   "over",
   "between",
   "and",
+  "to",
   "with",
   "for",
   "of",
@@ -95,6 +96,9 @@ const PRODUCT_CATEGORIES = [
 
 /**
  * Normalize user query.
+ *
+ * Currency commas are removed so values such as
+ * ₹1,000 become 1000 before price parsing.
  */
 function normalizeQuery(query) {
   if (typeof query !== "string") {
@@ -123,12 +127,18 @@ function escapeRegExp(value) {
  *
  * Supported examples:
  * - under ₹1000
- * - below 1000
- * - less than 1000
- * - up to 1000
- * - above 500
- * - over 500
- * - between 500 and 1000
+ * - below ₹1000
+ * - less than ₹1000
+ * - up to ₹1000
+ * - above ₹500
+ * - over ₹500
+ * - more than ₹500
+ * - between ₹500 and ₹1000
+ * - from ₹500 to ₹1000
+ *
+ * normalizeQuery() removes the ₹ symbol and
+ * thousands separators before these expressions
+ * are evaluated.
  */
 function extractPriceFilters(query) {
   const normalized = normalizeQuery(query);
@@ -138,8 +148,8 @@ function extractPriceFilters(query) {
     maxPrice: null
   };
 
-  /*
-   * Between X and Y
+  /**
+   * Between X and Y / From X to Y
    */
   const betweenMatch = normalized.match(
     /(?:between|from)\s+(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s+(?:and|to|-)\s+(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)/i
@@ -167,7 +177,7 @@ function extractPriceFilters(query) {
     return filters;
   }
 
-  /*
+  /**
    * Maximum price
    */
   const maxMatch = normalized.match(
@@ -180,7 +190,7 @@ function extractPriceFilters(query) {
     );
   }
 
-  /*
+  /**
    * Minimum price
    */
   const minMatch = normalized.match(
@@ -199,26 +209,16 @@ function extractPriceFilters(query) {
 /**
  * Extract an Indian state.
  *
- * IMPORTANT:
  * Multi-word states are matched as complete phrases.
- *
- * Example:
- * "West Bengal"
- *
- * becomes:
- * state = "West Bengal"
- *
- * NOT:
- * keywords = ["west", "bengal"]
  */
 function extractState(query) {
   const normalized = normalizeQuery(query);
 
-  /*
+  /**
    * Longest states first.
    *
-   * This helps ensure multi-word states are
-   * considered before shorter possibilities.
+   * This ensures multi-word states are considered
+   * before shorter possibilities.
    */
   const states = [
     ...INDIAN_STATES
@@ -316,7 +316,7 @@ function extractKeywords(query) {
   let cleanedQuery =
     removeStateFromQuery(query);
 
-  /*
+  /**
    * Remove categories from keywords.
    */
   const categories = [
@@ -340,7 +340,7 @@ function extractKeywords(query) {
       );
   }
 
-  /*
+  /**
    * Remove price expressions.
    */
   cleanedQuery = cleanedQuery
