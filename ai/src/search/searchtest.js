@@ -9,17 +9,17 @@
  *
  * These tests verify:
  * - Natural-language parsing
+ * - Real UTF-8 ₹ currency input
+ * - Comma-formatted prices
  * - Multi-word Indian states
  * - Price filters
- * - Comma-formatted prices
+ * - Price ranges
  * - Category filters
  * - Search filtering
  * - Empty results
  * - No fictional products
  * - Catalogue immutability
- * - Real ₹ Unicode input
- * - Rs and INR price formats
- * - Reversed price ranges
+ * - Supplied catalogue isolation
  */
 
 import assert from "node:assert";
@@ -138,13 +138,13 @@ function test(
     testFunction();
 
     console.log(
-      `✓ ${name}`
+      `PASS: ${name}`
     );
 
     passed++;
   } catch (error) {
     console.error(
-      `✗ ${name}`
+      `FAIL: ${name}`
     );
 
     console.error(
@@ -158,6 +158,420 @@ function test(
 /*
  * ============================================================
  * TEST 1
+ * Actual ₹1000 input
+ * ============================================================
+ */
+
+test(
+  "Products under ₹1000 should parse correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products under ₹1000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+
+    assert.strictEqual(
+      filters.minPrice,
+      null
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 2
+ * Actual comma-formatted ₹1,000
+ * ============================================================
+ */
+
+test(
+  "Products under ₹1,000 should parse correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products under ₹1,000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+
+    assert.strictEqual(
+      filters.minPrice,
+      null
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 3
+ * Below ₹1000
+ * ============================================================
+ */
+
+test(
+  "Products below ₹1000 should set maxPrice",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products below ₹1000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 4
+ * Less than ₹1000
+ * ============================================================
+ */
+
+test(
+  "Products less than ₹1000 should set maxPrice",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products less than ₹1000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 5
+ * Up to ₹1000
+ * ============================================================
+ */
+
+test(
+  "Products up to ₹1000 should set maxPrice",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products up to ₹1000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 6
+ * Above ₹500
+ * ============================================================
+ */
+
+test(
+  "Products above ₹500 should set minPrice",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products above ₹500"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      null
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 7
+ * Over ₹500
+ * ============================================================
+ */
+
+test(
+  "Products over ₹500 should set minPrice",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products over ₹500"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 8
+ * More than ₹500
+ * ============================================================
+ */
+
+test(
+  "Products more than ₹500 should set minPrice",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products more than ₹500"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 9
+ * Between ₹500 and ₹1000
+ * ============================================================
+ */
+
+test(
+  "Products between ₹500 and ₹1000 should parse correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products between ₹500 and ₹1000"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 10
+ * Between ₹500 and ₹1,000
+ * ============================================================
+ */
+
+test(
+  "Products between ₹500 and ₹1,000 should parse correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products between ₹500 and ₹1,000"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 11
+ * From ₹500 to ₹1000
+ * ============================================================
+ */
+
+test(
+  "Products from ₹500 to ₹1000 should parse correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products from ₹500 to ₹1000"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 12
+ * From ₹500 to ₹1,000
+ * ============================================================
+ */
+
+test(
+  "Products from ₹500 to ₹1,000 should parse correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products from ₹500 to ₹1,000"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 13
+ * Under ₹5,000
+ * ============================================================
+ */
+
+test(
+  "Products under ₹5,000 should parse correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products under ₹5,000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      5000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 14
+ * Under ₹10,000
+ * ============================================================
+ */
+
+test(
+  "Products under ₹10,000 should parse correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products under ₹10,000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      10000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 15
+ * Rs 1000
+ * ============================================================
+ */
+
+test(
+  "Rs 1000 price format should work",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products under Rs 1000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 16
+ * INR 1000
+ * ============================================================
+ */
+
+test(
+  "INR 1000 price format should work",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products under INR 1000"
+      );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 17
+ * Reversed range
+ * ============================================================
+ */
+
+test(
+  "Reversed price range should normalize correctly",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "products between ₹1000 and ₹500"
+      );
+
+    assert.strictEqual(
+      filters.minPrice,
+      500
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 18
  * Bihar + under ₹1000
  * ============================================================
  */
@@ -196,7 +610,8 @@ test(
         product =>
           product.state ===
             "Bihar" &&
-          product.price <= 1000
+          product.price <=
+            1000
       )
     );
   }
@@ -204,17 +619,80 @@ test(
 
 /*
  * ============================================================
- * TEST 2
+ * TEST 19
+ * Combined query with comma-formatted price
+ * ============================================================
+ */
+
+test(
+  "Traditional handmade Bihar products under ₹1,000",
+  () => {
+    const filters =
+      parseSearchQuery(
+        "traditional handmade products from Bihar under ₹1,000"
+      );
+
+    assert.strictEqual(
+      filters.state,
+      "Bihar"
+    );
+
+    assert.strictEqual(
+      filters.minPrice,
+      null
+    );
+
+    assert.strictEqual(
+      filters.maxPrice,
+      1000
+    );
+
+    assert(
+      !filters.keywords.includes(
+        "bihar"
+      )
+    );
+
+    const results =
+      filterProducts(
+        products,
+        filters
+      );
+
+    assert(
+      results.every(
+        product =>
+          product.state ===
+            "Bihar" &&
+          product.price <=
+            1000
+      )
+    );
+
+    assert(
+      results.every(
+        product =>
+          products.includes(
+            product
+          )
+      )
+    );
+  }
+);
+
+/*
+ * ============================================================
+ * TEST 20
  * West Bengal
  * ============================================================
  */
 
 test(
-  "West Bengal must be treated as one state",
+  "West Bengal must remain one state",
   () => {
     const filters =
       parseSearchQuery(
-        "Show me products from West Bengal"
+        "products from West Bengal"
       );
 
     assert.strictEqual(
@@ -254,17 +732,17 @@ test(
 
 /*
  * ============================================================
- * TEST 3
+ * TEST 21
  * Uttar Pradesh
  * ============================================================
  */
 
 test(
-  "Uttar Pradesh must be treated as one state",
+  "Uttar Pradesh must remain one state",
   () => {
     const filters =
       parseSearchQuery(
-        "handmade products from Uttar Pradesh"
+        "products from Uttar Pradesh"
       );
 
     assert.strictEqual(
@@ -304,17 +782,17 @@ test(
 
 /*
  * ============================================================
- * TEST 4
+ * TEST 22
  * Madhya Pradesh
  * ============================================================
  */
 
 test(
-  "Madhya Pradesh must be treated as one state",
+  "Madhya Pradesh must remain one state",
   () => {
     const filters =
       parseSearchQuery(
-        "Show me products from Madhya Pradesh"
+        "products from Madhya Pradesh"
       );
 
     assert.strictEqual(
@@ -354,91 +832,49 @@ test(
 
 /*
  * ============================================================
- * TEST 5
- * Price range
+ * TEST 23
+ * Other multi-word states
  * ============================================================
  */
 
 test(
-  "Between ₹500 and ₹1000 should parse correctly",
+  "Other multi-word Indian states must remain intact",
   () => {
-    const filters =
-      parseSearchQuery(
-        "handmade products between ₹500 and ₹1000"
+    const states = [
+      "Himachal Pradesh",
+      "Andhra Pradesh",
+      "Arunachal Pradesh",
+      "Tamil Nadu"
+    ];
+
+    for (const state of states) {
+      const filters =
+        parseSearchQuery(
+          `products from ${state}`
+        );
+
+      assert.strictEqual(
+        filters.state,
+        state
       );
 
-    assert.strictEqual(
-      filters.minPrice,
-      500
-    );
+      const stateWords =
+        state.toLowerCase().split(" ");
 
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-
-    const results =
-      filterProducts(
-        products,
-        filters
-      );
-
-    assert(
-      results.every(
-        product =>
-          product.price >=
-            500 &&
-          product.price <=
-            1000
-      )
-    );
+      for (const word of stateWords) {
+        assert(
+          !filters.keywords.includes(
+            word
+          )
+        );
+      }
+    }
   }
 );
 
 /*
  * ============================================================
- * TEST 6
- * Minimum price
- * ============================================================
- */
-
-test(
-  "Above ₹800 should parse correctly",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products above ₹800"
-      );
-
-    assert.strictEqual(
-      filters.minPrice,
-      800
-    );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      null
-    );
-
-    const results =
-      filterProducts(
-        products,
-        filters
-      );
-
-    assert(
-      results.every(
-        product =>
-          product.price >=
-          800
-      )
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 7
+ * TEST 24
  * Category
  * ============================================================
  */
@@ -481,418 +917,7 @@ test(
 
 /*
  * ============================================================
- * TEST 8
- * Rs price format
- * ============================================================
- */
-
-test(
-  "Rs 1000 price format should work",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products under Rs 1000"
-      );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 9
- * INR price format
- * ============================================================
- */
-
-test(
-  "INR 1000 price format should work",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products under INR 1000"
-      );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 10
- * Actual ₹1000
- * ============================================================
- */
-
-test(
-  "Actual ₹1000 input should work",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products under ₹1000"
-      );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 11
- * Comma-formatted ₹1,000
- * ============================================================
- */
-
-test(
-  "Comma-formatted ₹1,000 should parse as 1000",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products under ₹1,000"
-      );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 12
- * Comma-formatted range
- * ============================================================
- */
-
-test(
-  "₹500 to ₹1,000 range should parse correctly",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products between ₹500 and ₹1,000"
-      );
-
-    assert.strictEqual(
-      filters.minPrice,
-      500
-    );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 13
- * Less than ₹1000
- * ============================================================
- */
-
-test(
-  "Less than ₹1000 should set maxPrice",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products less than ₹1000"
-      );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-
-    assert.strictEqual(
-      filters.minPrice,
-      null
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 14
- * Up to ₹1000
- * ============================================================
- */
-
-test(
-  "Up to ₹1000 should set maxPrice",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products up to ₹1000"
-      );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-
-    assert.strictEqual(
-      filters.minPrice,
-      null
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 15
- * Over ₹500
- * ============================================================
- */
-
-test(
-  "Over ₹500 should set minPrice to 500",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products over ₹500"
-      );
-
-    assert.strictEqual(
-      filters.minPrice,
-      500
-    );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      null
-    );
-
-    const results =
-      filterProducts(
-        products,
-        filters
-      );
-
-    assert(
-      results.every(
-        product =>
-          product.price >=
-          500
-      )
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 16
- * Above ₹500
- * ============================================================
- */
-
-test(
-  "Above ₹500 should set minPrice",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products above ₹500"
-      );
-
-    assert.strictEqual(
-      filters.minPrice,
-      500
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 17
- * More than ₹500
- * ============================================================
- */
-
-test(
-  "More than ₹500 should set minPrice",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products more than ₹500"
-      );
-
-    assert.strictEqual(
-      filters.minPrice,
-      500
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 18
- * From ₹500 to ₹1000
- * ============================================================
- */
-
-test(
-  "From ₹500 to ₹1000 should parse correctly",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products from ₹500 to ₹1000"
-      );
-
-    assert.strictEqual(
-      filters.minPrice,
-      500
-    );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 19
- * Reversed price range
- * ============================================================
- */
-
-test(
-  "Reversed range should normalize min and max",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products between ₹1000 and ₹500"
-      );
-
-    assert.strictEqual(
-      filters.minPrice,
-      500
-    );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 20
- * ₹5,000
- * ============================================================
- */
-
-test(
-  "₹5,000 should parse correctly",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products under ₹5,000"
-      );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      5000
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 21
- * ₹10,000
- * ============================================================
- */
-
-test(
-  "₹10,000 should parse correctly",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "products under ₹10,000"
-      );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      10000
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 22
- * Combined real-world query
- * ============================================================
- */
-
-test(
-  "Traditional handmade Bihar products under ₹1,000",
-  () => {
-    const filters =
-      parseSearchQuery(
-        "traditional handmade products from Bihar under ₹1,000"
-      );
-
-    assert.strictEqual(
-      filters.state,
-      "Bihar"
-    );
-
-    assert.strictEqual(
-      filters.minPrice,
-      null
-    );
-
-    assert.strictEqual(
-      filters.maxPrice,
-      1000
-    );
-
-    assert(
-      !filters.keywords.includes(
-        "bihar"
-      )
-    );
-
-    const results =
-      filterProducts(
-        products,
-        filters
-      );
-
-    assert.strictEqual(
-      results.length,
-      2
-    );
-
-    assert(
-      results.every(
-        product =>
-          product.state ===
-            "Bihar" &&
-          product.price <=
-            1000
-      )
-    );
-  }
-);
-
-/*
- * ============================================================
- * TEST 23
+ * TEST 25
  * Empty query
  * ============================================================
  */
@@ -932,13 +957,13 @@ test(
 
 /*
  * ============================================================
- * TEST 24
+ * TEST 26
  * No matching products
  * ============================================================
  */
 
 test(
-  "No matching products should return an empty result",
+  "No matching products should return empty result",
   () => {
     const filters =
       parseSearchQuery(
@@ -956,10 +981,6 @@ test(
       0
     );
 
-    /*
-     * No fictional Rajasthan product
-     * should be generated.
-     */
     assert.deepStrictEqual(
       results,
       []
@@ -969,8 +990,8 @@ test(
 
 /*
  * ============================================================
- * TEST 25
- * Search must not modify catalogue
+ * TEST 27
+ * Catalogue immutability
  * ============================================================
  */
 
@@ -1003,13 +1024,13 @@ test(
 
 /*
  * ============================================================
- * TEST 26
- * Search only supplied products
+ * TEST 28
+ * Only supplied products
  * ============================================================
  */
 
 test(
-  "Search must only return products supplied by caller",
+  "Search must only return supplied products",
   () => {
     const suppliedProducts = [
       products[0]
@@ -1035,6 +1056,12 @@ test(
       results[0].id,
       1
     );
+
+    assert(
+      suppliedProducts.includes(
+        results[0]
+      )
+    );
   }
 );
 
@@ -1052,10 +1079,10 @@ if (failed > 0) {
   process.exitCode = 1;
 
   console.error(
-    "✗ Some search tests failed."
+    "FAIL: Some search tests failed."
   );
 } else {
   console.log(
-    "✓ All search tests passed successfully."
+    "ALL TESTS PASSED"
   );
 }

@@ -11,17 +11,14 @@
  * - It does NOT interpret natural language.
  * - It does NOT call an AI provider.
  *
- * AI/parser layer:
- *     Natural language
- *          ↓
- *     Structured filters
- *
- * Search service:
- *     Structured filters
- *          ↓
- *     Real catalogue products
- *          ↓
- *     Matching results
+ * Search flow:
+ * Customer query
+ * ->
+ * Structured filters
+ * ->
+ * Supplied catalogue products
+ * ->
+ * Matching results
  */
 
 import {
@@ -132,16 +129,12 @@ function calculateRelevanceScore(
  *
  * `products` must be supplied by the caller.
  *
- * In production this should come from the
- * backend/database layer.
- *
  * MVP keyword behavior:
  * ANY keyword match is sufficient for a product
- * to pass the keyword filter. Relevance scoring
- * then ranks products based on matched keywords.
+ * to pass the keyword filter.
  *
- * This preserves the existing MVP behavior and
- * avoids unnecessarily broad architectural changes.
+ * Relevance scoring then ranks the matching
+ * supplied products.
  */
 function filterProducts(
   products,
@@ -304,7 +297,6 @@ function filterProducts(
 
         /*
          * MVP intentionally uses ANY keyword match.
-         * Ranking still rewards stronger matches.
          */
         const matchesKeyword =
           keywords.some(keyword =>
@@ -347,13 +339,11 @@ function filterProducts(
 /**
  * Build a search result.
  *
- * IMPORTANT:
- * The backend/API integration must map this
- * into the exact response structure required
- * by API_CONTRACT.md.
+ * This function does not perform database
+ * operations and does not create product IDs.
  *
- * This function itself does not create products
- * or perform database operations.
+ * Backend integration remains responsible for
+ * mapping results to API_CONTRACT.md.
  */
 function buildSearchResponse(
   filters,

@@ -97,8 +97,14 @@ const PRODUCT_CATEGORIES = [
 /**
  * Normalize user query.
  *
- * Currency commas are removed so values such as
- * ₹1,000 become 1000 before price parsing.
+ * The actual Indian Rupee symbol is supported.
+ * Commas used as thousands separators are removed.
+ *
+ * Examples:
+ * ₹1000  -> 1000
+ * ₹1,000 -> 1000
+ * ₹5,000 -> 5000
+ * ₹10,000 -> 10000
  */
 function normalizeQuery(query) {
   if (typeof query !== "string") {
@@ -125,7 +131,7 @@ function escapeRegExp(value) {
 /**
  * Extract price filters.
  *
- * Supported examples:
+ * Supported forms:
  * - under ₹1000
  * - below ₹1000
  * - less than ₹1000
@@ -136,9 +142,8 @@ function escapeRegExp(value) {
  * - between ₹500 and ₹1000
  * - from ₹500 to ₹1000
  *
- * normalizeQuery() removes the ₹ symbol and
- * thousands separators before these expressions
- * are evaluated.
+ * normalizeQuery() removes the actual ₹ symbol
+ * and thousands separators before parsing.
  */
 function extractPriceFilters(query) {
   const normalized = normalizeQuery(query);
@@ -214,12 +219,6 @@ function extractPriceFilters(query) {
 function extractState(query) {
   const normalized = normalizeQuery(query);
 
-  /**
-   * Longest states first.
-   *
-   * This ensures multi-word states are considered
-   * before shorter possibilities.
-   */
   const states = [
     ...INDIAN_STATES
   ].sort(
@@ -342,14 +341,17 @@ function extractKeywords(query) {
 
   /**
    * Remove price expressions.
+   *
+   * normalizeQuery() has already converted:
+   * ₹1,000 -> 1000
    */
   cleanedQuery = cleanedQuery
     .replace(
-      /(?:under|below|less than|up to|upto|over|above|more than|between|from)\s+(?:rs\.?|inr|₹)?\s*\d+(?:\.\d+)?/gi,
+      /(?:under|below|less than|up to|upto|over|above|more than|between|from)\s+(?:rs\.?|inr)?\s*\d+(?:\.\d+)?/gi,
       " "
     )
     .replace(
-      /(?:rs\.?|inr|₹)\s*\d+(?:\.\d+)?/gi,
+      /(?:rs\.?|inr)\s*\d+(?:\.\d+)?/gi,
       " "
     )
     .replace(
