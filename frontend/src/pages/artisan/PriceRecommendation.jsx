@@ -1,19 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "./PriceRecommendation.css";
 
 function PriceRecommendation({ onBack, productData }) {
-  const [finalPrice, setFinalPrice] = useState("");
-  const [error, setError] = useState("");
-
   const suggestedPrice = productData?.suggestedPrice;
   const minPrice = productData?.priceRange?.min;
   const maxPrice = productData?.priceRange?.max;
 
-  useEffect(() => {
-    if (typeof suggestedPrice === "number") {
-      setFinalPrice(String(suggestedPrice));
-    }
-  }, [suggestedPrice]);
+  const [finalPrice, setFinalPrice] = useState(
+    typeof suggestedPrice === "number" ? String(suggestedPrice) : ""
+  );
+
+  const [error, setError] = useState("");
 
   const handleUseRecommendation = () => {
     if (typeof suggestedPrice === "number") {
@@ -33,9 +30,10 @@ function PriceRecommendation({ onBack, productData }) {
     setError("");
 
     /*
-      Final product price should later be sent to the backend
-      during the explicit draft review / approval / publish flow.
-      No fake success message is shown here.
+      The artisan's final price is selected here.
+      It will be sent to the backend during the
+      draft review / approval / publish flow once
+      the agreed backend endpoint is available.
     */
   };
 
@@ -93,6 +91,7 @@ function PriceRecommendation({ onBack, productData }) {
 
         <div className="price-heading">
           <h1>AI Price Recommendation 💰</h1>
+
           <p>
             AI has suggested a price based on your product information. You
             choose the final selling price.
@@ -135,8 +134,8 @@ function PriceRecommendation({ onBack, productData }) {
               type="number"
               min="1"
               value={finalPrice}
-              onChange={(e) => {
-                setFinalPrice(e.target.value);
+              onChange={(event) => {
+                setFinalPrice(event.target.value);
                 setError("");
               }}
               placeholder="Enter your final selling price"

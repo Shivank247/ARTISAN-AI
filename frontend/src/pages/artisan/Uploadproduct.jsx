@@ -1,4 +1,5 @@
-import { useState } from "react";
+```jsx
+import { useEffect, useState } from "react";
 import "./UploadProduct.css";
 
 function UploadProduct({ onBack, onContinue }) {
@@ -14,6 +15,14 @@ function UploadProduct({ onBack, onContinue }) {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
   const handleContinue = () => {
     if (image) {
       onContinue(image);
@@ -23,7 +32,11 @@ function UploadProduct({ onBack, onContinue }) {
   return (
     <div className="upload-page">
       <div className="upload-card">
-        <button className="back-btn" onClick={onBack}>
+        <button
+          type="button"
+          className="back-btn"
+          onClick={onBack}
+        >
           ← Back
         </button>
 
@@ -33,6 +46,7 @@ function UploadProduct({ onBack, onContinue }) {
 
         <div className="upload-heading">
           <h1>Add your product</h1>
+
           <p>
             Upload a clear photo of your handmade product. Our AI will help
             understand and create your catalogue.
@@ -42,7 +56,9 @@ function UploadProduct({ onBack, onContinue }) {
         {!preview ? (
           <label className="upload-box">
             <div className="upload-icon">📸</div>
+
             <h3>Upload Product Photo</h3>
+
             <p>Click here to select an image</p>
 
             <input
@@ -56,12 +72,13 @@ function UploadProduct({ onBack, onContinue }) {
           <div className="preview-container">
             <img
               src={preview}
-              alt="Product preview"
+              alt="Selected product preview"
               className="product-preview"
             />
 
             <label className="change-btn">
               Change Photo
+
               <input
                 type="file"
                 accept="image/*"
@@ -73,6 +90,7 @@ function UploadProduct({ onBack, onContinue }) {
         )}
 
         <button
+          type="button"
           className="continue-ai-btn"
           onClick={handleContinue}
           disabled={!image}
@@ -85,3 +103,4 @@ function UploadProduct({ onBack, onContinue }) {
 }
 
 export default UploadProduct;
+```
