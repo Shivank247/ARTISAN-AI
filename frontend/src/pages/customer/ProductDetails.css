@@ -1,0 +1,193 @@
+.product-details-page {
+  min-height: 100vh;
+  padding: 32px 8%;
+  background: #f8f7f4;
+  color: #1f2933;
+}
+
+.product-details-layout {
+  max-width: 1200px;
+  margin: 24px auto 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 45px;
+  padding: 35px;
+  background: white;
+  border: 1px solid #e7e3dc;
+  border-radius: 20px;
+}
+
+.product-image-section {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f2ed;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.details-product-image {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.image-unavailable {
+  color: #667085;
+  text-align: center;
+  padding: 30px;
+}
+
+.product-info-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.product-category {
+  width: fit-content;
+  padding: 7px 12px;
+  margin-bottom: 14px;
+  border-radius: 20px;
+  background: #f2ede5;
+  color: #6b5740;
+  font-size: 14px;
+}
+
+.product-info-section h1 {
+  margin: 0 0 18px;
+  font-size: 36px;
+  line-height: 1.2;
+}
+
+.product-description {
+  margin: 0 0 20px;
+  color: #667085;
+  line-height: 1.7;
+}
+
+.product-price {
+  margin: 20px 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.add-cart-btn {
+  width: fit-content;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.meet-artisan-section {
+  max-width: 1200px;
+  margin: 30px auto 0;
+  padding: 35px;
+  background: white;
+  border: 1px solid #e7e3dc;
+  border-radius: 20px;
+}
+
+.meet-artisan-section h2 {
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-size: 28px;
+}
+
+.artisan-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.artisan-info > div {
+  padding: 20px;
+  background: #faf9f7;
+  border-radius: 14px;
+}
+
+.artisan-info span {
+  font-size: 13px;
+  color: #667085;
+}
+
+.artisan-info p {
+  margin: 8px 0 0;
+  line-height: 1.6;
+}
+
+.artisan-story {
+  grid-column: 1 / -1;
+}
+
+.empty-product-state {
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.empty-product-state h2 {
+  margin-bottom: 10px;
+}
+
+.empty-product-state p {
+  color: #667085;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+  .product-details-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .artisan-info {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .product-details-page {
+    padding: 20px 5%;
+  }
+
+  .product-details-layout {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .product-image-section,
+  .details-product-image {
+    min-height: 280px;
+  }
+
+  .product-info-section h1 {
+    font-size: 28px;
+  }
+
+  .meet-artisan-section {
+    padding: 22px;
+    border-radius: 16px;
+  }
+
+  .meet-artisan-section h2 {
+    font-size: 24px;
+  }
+
+  .artisan-info {
+    grid-template-columns: 1fr;
+  }
+
+  .artisan-story {
+    grid-column: auto;
+  }
+
+  .add-cart-btn {
+    width: 100%;
+  }
+}

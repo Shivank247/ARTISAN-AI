@@ -1,25 +1,41 @@
 import { useState } from "react";
 import "./AICatalogue.css";
+import { generateProduct } from "../../services/api";
 
-function AICatalogue({ onBack }) {
+function AICatalogue({ onBack, productData, onGenerated }) {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generated, setGenerated] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
-    setGenerated(false);
+    setError("");
 
-    // Frontend demo loading
-    setTimeout(() => {
+    try {
+      const response = await generateProduct(productData);
+
+      setResult(response.data);
+
+      if (onGenerated) {
+        onGenerated(response.data);
+      }
+    } catch (err) {
+      setError(
+        err.message || "Unable to generate catalogue. Please try again."
+      );
+    } finally {
       setIsGenerating(false);
-      setGenerated(true);
-    }, 2000);
+    }
   };
 
   return (
     <div className="catalogue-page">
       <div className="catalogue-card">
-        <button className="back-btn" onClick={onBack}>
+        <button
+          className="back-btn"
+          onClick={onBack}
+          disabled={isGenerating}
+        >
           ← Back
         </button>
 
@@ -30,21 +46,35 @@ function AICatalogue({ onBack }) {
         <div className="catalogue-heading">
           <h1>AI Product Catalogue</h1>
           <p>
-            Generate a professional product title and description for your
-            handmade product.
+            Generate product information for your handmade product using AI.
+            Review the result before publishing.
           </p>
         </div>
 
-        {!generated ? (
+        {!result ? (
           <div className="generate-section">
             <div className="ai-icon">✨</div>
 
             <h2>Ready to generate your catalogue?</h2>
 
             <p>
-              Our AI will help create product information that can later be
-              shown to customers.
+              AI will generate a draft catalogue. You can review and edit it
+              before approval.
             </p>
+
+            {error && (
+              <div className="api-error" role="alert">
+                <p>{error}</p>
+
+                <button
+                  className="retry-btn"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
 
             <button
               className="generate-btn"
@@ -60,24 +90,63 @@ function AICatalogue({ onBack }) {
           <div className="catalogue-result">
             <div className="result-box">
               <span>PRODUCT TITLE</span>
-              <h2>Handcrafted Traditional Artisan Product</h2>
+              <h2>{result.title}</h2>
             </div>
 
             <div className="result-box">
               <span>PRODUCT DESCRIPTION</span>
-
-              <p>
-                Beautifully handcrafted by skilled artisans using traditional
-                techniques. Each product is unique and reflects the rich
-                heritage of Indian craftsmanship.
-              </p>
+              <p>{result.description}</p>
             </div>
+
+            <div className="result-box">
+              <span>CATEGORY</span>
+              <p>{result.category}</p>
+            </div>
+
+            <div className="result-box">
+              <span>MATERIAL</span>
+              <p>{result.material}</p>
+            </div>
+
+            <div className="result-box">
+              <span>TAGS</span>
+              <p>{result.tags?.join(", ") || "Not provided"}</p>
+            </div>
+
+            <div className="result-box">
+              <span>SUGGESTED PRICE</span>
+              <p>₹{result.suggestedPrice}</p>
+            </div>
+
+            {result.priceRange && (
+              <div className="result-box">
+                <span>AI PRICE RANGE</span>
+                <p>
+                  ₹{result.priceRange.min} – ₹{result.priceRange.max}
+                </p>
+              </div>
+            )}
+
+            {typeof result.confidence === "number" && (
+              <div className="result-box">
+                <span>CONFIDENCE</span>
+                <p>{Math.round(result.confidence * 100)}%</p>
+              </div>
+            )}
+
+            <p className="draft-note">
+              This AI-generated information is a draft. Review and edit it
+              before approving or publishing.
+            </p>
 
             <button
               className="generate-btn"
               onClick={handleGenerate}
+              disabled={isGenerating}
             >
-              Generate Again ✨
+              {isGenerating
+                ? "Generating..."
+                : "Generate Again ✨"}
             </button>
           </div>
         )}

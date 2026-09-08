@@ -1,0 +1,71 @@
+.review-page {
+  min-height: 100vh;
+  padding: 30px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.review-card {
+  width: 100%;
+  max-width: 650px;
+  padding: 30px;
+  border-radius: 20px;
+  background: white;
+}
+
+.review-logo {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+
+.review-heading {
+  margin-bottom: 25px;
+}
+
+.review-heading h1 {
+  margin-bottom: 8px;
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.review-note {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #fff8e8;
+  font-size: 14px;
+}
+
+.approve-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+}

@@ -1,0 +1,160 @@
+.admin-page {
+  min-height: 100vh;
+  background: #f8f7f4;
+  color: #1f2933;
+}
+
+.admin-header {
+  padding: 40px 8%;
+  background: white;
+  border-bottom: 1px solid #e7e3dc;
+}
+
+.admin-logo {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 28px;
+}
+
+.admin-logo span {
+  margin-left: 6px;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 36px;
+}
+
+.admin-header p {
+  margin-top: 10px;
+  color: #667085;
+}
+
+.admin-content {
+  width: min(1200px, 90%);
+  margin: 0 auto;
+  padding: 40px 0 70px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.metric-card {
+  background: white;
+  border: 1px solid #e7e3dc;
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.metric-card h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #667085;
+}
+
+.metric-value {
+  margin: 16px 0 10px;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.metric-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #98a2b3;
+  line-height: 1.5;
+}
+
+.admin-section {
+  margin-top: 28px;
+  padding: 28px;
+  background: white;
+  border: 1px solid #e7e3dc;
+  border-radius: 18px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.section-heading p {
+  margin: 8px 0 0;
+  color: #667085;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 50px 20px;
+}
+
+.empty-state span {
+  font-size: 38px;
+}
+
+.empty-state h3 {
+  margin: 14px 0 8px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #667085;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.impact-card {
+  padding: 22px;
+  background: #faf9f7;
+  border-radius: 14px;
+}
+
+.impact-card h3 {
+  margin-top: 0;
+}
+
+.impact-card p {
+  margin-bottom: 0;
+  color: #667085;
+}
+
+@media (max-width: 850px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .impact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 500px) {
+  .admin-header {
+    padding: 28px 6%;
+  }
+
+  .admin-header h1 {
+    font-size: 28px;
+  }
+
+  .admin-content {
+    width: 88%;
+    padding-top: 28px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-section {
+    padding: 20px;
+  }
+}
