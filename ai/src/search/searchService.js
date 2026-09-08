@@ -1,372 +1,245 @@
 /**
+ * ARTISAN AI
  * Search Service
  *
- * This service is responsible ONLY for searching
- * existing catalogue/database products.
+ * Purpose:
+ * Search ONLY within a catalogue supplied by the application.
  *
  * IMPORTANT:
- * - It does NOT create products.
- * - It does NOT invent products.
- * - It does NOT generate fictional results.
- * - It does NOT interpret natural language.
- * - It does NOT call an AI provider.
+ * - No PostgreSQL.
+ * - No Prisma.
+ * - No database access.
+ * - No product creation.
+ * - No fake product IDs.
  *
- * Search flow:
- * Customer query
- * ->
- * Structured filters
- * ->
- * Supplied catalogue products
- * ->
- * Matching results
+ * The backend remains responsible for the actual database query.
  */
 
-import {
-  validateSearchFilters
-} from "./searchValidator.js";
+const {
+  validateSearchFilters,
+  normalizeSearchFilters,
+} = require("./searchValidator");
 
-/**
- * Calculate relevance score for an
- * existing catalogue product.
- */
+function normalizeProductText(value) {
+  if (value === undefined || value === null) {
+    return "";
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item))
+      .join(" ")
+      .toLowerCase();
+  }
+
+  return String(value).toLowerCase();
+}
+
+function productMatchesFilters(product, filters) {
+  if (
+    filters.state &&
+    normalizeProductText(product.state) !==
+      filters.state.toLowerCase()
+  ) {
+    return false;
+  }
+
+  if (
+    filters.category &&
+    normalizeProductText(product.category) !==
+      filters.category.toLowerCase()
+  ) {
+    return false;
+  }
+
+  if (
+    filters.minPrice !== null &&
+    (
+      typeof product.price !== "number" ||
+      product.price < filters.minPrice
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    filters.maxPrice !== null &&
+    (
+      typeof product.price !== "number" ||
+      product.price > filters.maxPrice
+    )
+  ) {
+    return false;
+  }
+
+  if (filters.keywords.length > 0) {
+    const searchableText = [
+      product.title,
+      product.name,
+      product.description,
+      product.material,
+      product.category,
+      product.tags,
+    ]
+      .map(normalizeProductText)
+      .join(" ");
+
+    /*
+     * MVP behavior:
+     * A product matches when at least one requested keyword
+     * is present in the supplied product information.
+     */
+    const hasKeywordMatch =
+      filters.keywords.some((keyword) =>
+        searchableText.includes(
+          keyword.toLowerCase()
+        )
+      );
+
+    if (!hasKeywordMatch) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function calculateRelevanceScore(
   product,
   filters
 ) {
   let score = 0;
 
-  const searchableText = [
-    product.title,
-    product.name,
-    product.description,
-    product.material,
-    product.category,
-    ...(Array.isArray(product.tags)
-      ? product.tags
-      : [])
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  const title = normalizeProductText(
+    product.title
+  );
 
-  const title = String(
-    product.title ||
-      product.name ||
-      ""
-  ).toLowerCase();
+  const name = normalizeProductText(
+    product.name
+  );
 
-  /*
-   * Keyword relevance
-   */
-  for (
-    const keyword of
-      filters.keywords || []
-  ) {
+  const description = normalizeProductText(
+    product.description
+  );
+
+  const material = normalizeProductText(
+    product.material
+  );
+
+  const category = normalizeProductText(
+    product.category
+  );
+
+  const tags = normalizeProductText(
+    product.tags
+  );
+
+  for (const keyword of filters.keywords) {
     const normalizedKeyword =
-      String(keyword)
-        .toLowerCase()
-        .trim();
-
-    if (!normalizedKeyword) {
-      continue;
-    }
+      keyword.toLowerCase();
 
     if (
-      title.includes(
-        normalizedKeyword
-      )
+      title.includes(normalizedKeyword) ||
+      name.includes(normalizedKeyword)
     ) {
-      score += 5;
+      score += 4;
     } else if (
-      searchableText.includes(
-        normalizedKeyword
-      )
+      tags.includes(normalizedKeyword)
+    ) {
+      score += 3;
+    } else if (
+      description.includes(normalizedKeyword) ||
+      material.includes(normalizedKeyword)
     ) {
       score += 2;
-    }
-  }
-
-  /*
-   * Category relevance
-   */
-  if (filters.category) {
-    const productCategory =
-      String(
-        product.category || ""
-      ).toLowerCase();
-
-    if (
-      productCategory.includes(
-        filters.category.toLowerCase()
-      )
+    } else if (
+      category.includes(normalizedKeyword)
     ) {
-      score += 5;
+      score += 1;
     }
   }
 
-  /*
-   * State relevance
-   */
-  if (filters.state) {
-    const productState =
-      String(
-        product.state || ""
-      ).toLowerCase();
+  if (
+    filters.category &&
+    category === filters.category.toLowerCase()
+  ) {
+    score += 3;
+  }
 
-    if (
-      productState ===
+  if (
+    filters.state &&
+    normalizeProductText(product.state) ===
       filters.state.toLowerCase()
-    ) {
-      score += 5;
-    }
+  ) {
+    score += 3;
   }
 
   return score;
 }
 
-/**
- * Filter real catalogue/database products.
- *
- * `products` must be supplied by the caller.
- *
- * MVP keyword behavior:
- * ANY keyword match is sufficient for a product
- * to pass the keyword filter.
- *
- * Relevance scoring then ranks the matching
- * supplied products.
- */
-function filterProducts(
-  products,
+function searchProducts(
+  catalogue,
   filters
 ) {
-  if (!Array.isArray(products)) {
+  if (!Array.isArray(catalogue)) {
     throw new Error(
-      "Products must be an array."
+      "Search catalogue must be an array."
     );
   }
 
-  /*
-   * Validate structured filters
-   * before searching.
-   */
-  const validation =
-    validateSearchFilters(
-      filters
-    );
-
-  if (!validation.valid) {
+  if (!validateSearchFilters(filters)) {
     throw new Error(
-      validation.errors.join(" ")
+      "Invalid search filters."
     );
   }
 
-  const state = filters.state
-    ? filters.state
-        .toLowerCase()
-        .trim()
-    : null;
+  const normalizedFilters =
+    normalizeSearchFilters(filters);
 
-  const category =
-    filters.category
-      ? filters.category
-          .toLowerCase()
-          .trim()
-      : null;
+  if (!normalizedFilters) {
+    throw new Error(
+      "Invalid search filters."
+    );
+  }
 
-  const keywords =
-    Array.isArray(
-      filters.keywords
+  return catalogue
+    .filter((product) =>
+      productMatchesFilters(
+        product,
+        normalizedFilters
+      )
     )
-      ? filters.keywords
-          .map(keyword =>
-            String(keyword)
-              .toLowerCase()
-              .trim()
-          )
-          .filter(Boolean)
-      : [];
-
-  const minPrice =
-    typeof filters.minPrice ===
-    "number"
-      ? filters.minPrice
-      : null;
-
-  const maxPrice =
-    typeof filters.maxPrice ===
-    "number"
-      ? filters.maxPrice
-      : null;
-
-  /*
-   * Search ONLY the products supplied
-   * by the caller.
-   */
-  const results =
-    products.filter(product => {
+    .map((product, index) => ({
+      product,
+      relevanceScore:
+        calculateRelevanceScore(
+          product,
+          normalizedFilters
+        ),
+      originalIndex: index,
+    }))
+    .sort((a, b) => {
       if (
-        !product ||
-        typeof product !== "object"
+        b.relevanceScore !==
+        a.relevanceScore
       ) {
-        return false;
+        return (
+          b.relevanceScore -
+          a.relevanceScore
+        );
       }
 
-      /*
-       * State
-       */
-      if (state) {
-        const productState =
-          String(
-            product.state || ""
-          )
-            .toLowerCase()
-            .trim();
-
-        if (
-          productState !== state
-        ) {
-          return false;
-        }
-      }
-
-      /*
-       * Category
-       */
-      if (category) {
-        const productCategory =
-          String(
-            product.category || ""
-          )
-            .toLowerCase()
-            .trim();
-
-        if (
-          !productCategory.includes(
-            category
-          )
-        ) {
-          return false;
-        }
-      }
-
-      /*
-       * Price
-       */
-      const price = Number(
-        product.price
+      return (
+        a.originalIndex -
+        b.originalIndex
       );
-
-      if (minPrice !== null) {
-        if (
-          !Number.isFinite(price) ||
-          price < minPrice
-        ) {
-          return false;
-        }
-      }
-
-      if (maxPrice !== null) {
-        if (
-          !Number.isFinite(price) ||
-          price > maxPrice
-        ) {
-          return false;
-        }
-      }
-
-      /*
-       * Keywords
-       */
-      if (keywords.length > 0) {
-        const searchableText = [
-          product.title,
-          product.name,
-          product.description,
-          product.material,
-          product.category,
-          ...(Array.isArray(
-            product.tags
-          )
-            ? product.tags
-            : [])
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-
-        /*
-         * MVP intentionally uses ANY keyword match.
-         */
-        const matchesKeyword =
-          keywords.some(keyword =>
-            searchableText.includes(
-              keyword
-            )
-          );
-
-        if (!matchesKeyword) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-  /*
-   * Rank the existing matching
-   * catalogue products.
-   */
-  results.sort((a, b) => {
-    const scoreA =
-      calculateRelevanceScore(
-        a,
-        filters
-      );
-
-    const scoreB =
-      calculateRelevanceScore(
-        b,
-        filters
-      );
-
-    return scoreB - scoreA;
-  });
-
-  return results;
+    })
+    .map((item) => item.product);
 }
 
-/**
- * Build a search result.
- *
- * This function does not perform database
- * operations and does not create product IDs.
- *
- * Backend integration remains responsible for
- * mapping results to API_CONTRACT.md.
- */
-function buildSearchResponse(
-  filters,
-  products
-) {
-  return {
-    success: true,
-    filters,
-    count: products.length,
-    products,
-    message:
-      products.length === 0
-        ? "No matching products found."
-        : `${products.length} matching product${
-            products.length === 1
-              ? ""
-              : "s"
-          } found.`
-  };
-}
-
-export {
-  filterProducts,
-  buildSearchResponse,
-  calculateRelevanceScore
+module.exports = {
+  normalizeProductText,
+  productMatchesFilters,
+  calculateRelevanceScore,
+  searchProducts,
 };

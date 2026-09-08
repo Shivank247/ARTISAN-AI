@@ -1,47 +1,26 @@
 /**
- * Search Parser
+ * ARTISAN AI
+ * Natural Language Search Parser
  *
- * Deterministic parser for natural-language search queries.
+ * Ownership:
+ * Shivani — AI Search + Pricing
+ *
+ * Purpose:
+ * Convert a customer's natural-language search
+ * query into structured search filters.
  *
  * IMPORTANT:
- * - This parser does NOT access the database.
- * - This parser does NOT create products.
- * - This parser does NOT call an AI provider.
- * - It can be used as a deterministic/fallback layer
- *   when AI interpretation is unavailable.
+ * - No PostgreSQL access
+ * - No Prisma access
+ * - No database access
+ * - No AI provider access
+ * - No product creation
+ * - No product IDs
+ * - No fake products
+ *
+ * Backend/database is responsible for querying
+ * real Product records.
  */
-
-const STOP_WORDS = new Set([
-  "show",
-  "me",
-  "find",
-  "give",
-  "get",
-  "want",
-  "need",
-  "some",
-  "the",
-  "a",
-  "an",
-  "from",
-  "in",
-  "under",
-  "below",
-  "above",
-  "over",
-  "between",
-  "and",
-  "to",
-  "with",
-  "for",
-  "of",
-  "on",
-  "please",
-  "products",
-  "product",
-  "items",
-  "item"
-]);
 
 const INDIAN_STATES = [
   "Andhra Pradesh",
@@ -71,171 +50,278 @@ const INDIAN_STATES = [
   "Tripura",
   "Uttar Pradesh",
   "Uttarakhand",
-  "West Bengal"
+  "West Bengal",
 ];
 
 const PRODUCT_CATEGORIES = [
-  "painting",
-  "pottery",
-  "textile",
-  "jewellery",
+  "textiles",
   "jewelry",
-  "handicraft",
-  "handicrafts",
+  "pottery",
   "woodwork",
-  "basket",
-  "baskets",
-  "ceramic",
-  "clothing",
-  "decor",
-  "decoration",
+  "metalwork",
+  "painting",
+  "handicrafts",
   "home decor",
-  "craft",
-  "crafts"
+  "accessories",
 ];
 
-/**
- * Normalize user query.
+/*
+ * Words that should not become search keywords.
  *
- * The actual Indian Rupee symbol is supported.
- * Commas used as thousands separators are removed.
- *
- * Examples:
- * ₹1000  -> 1000
- * ₹1,000 -> 1000
- * ₹5,000 -> 5000
- * ₹10,000 -> 10000
+ * IMPORTANT:
+ * "handmade", "traditional", and "gifts"
+ * are intentionally NOT stop words because
+ * they are meaningful search intent.
  */
-function normalizeQuery(query) {
-  if (typeof query !== "string") {
-    return "";
-  }
+const STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "be",
+  "by",
+  "for",
+  "from",
+  "in",
+  "me",
+  "of",
+  "on",
+  "please",
+  "the",
+  "to",
+  "under",
+  "over",
+  "above",
+  "below",
+  "between",
+  "with",
+  "show",
+  "find",
+  "looking",
+  "want",
+  "give",
+  "some",
+  "product",
+  "products",
+  "item",
+  "items",
+  "price",
+  "prices",
+  "range",
+  "maximum",
+  "minimum",
+  "max",
+  "min",
+  "less",
+  "more",
+  "than",
+  "up",
+  "starting",
+]);
 
-  return query
-    .toLowerCase()
-    .replace(/[₹,]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+/**
+ * Normalize user input.
+ */
+function normalizeText(query) {
+  return String(query || "")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 /**
- * Escape special regex characters.
+ * Escape characters that have special meaning
+ * inside a regular expression.
  */
-function escapeRegExp(value) {
-  return value.replace(
+function escapeRegex(value) {
+  return String(value).replace(
     /[.*+?^${}()|[\]\\]/g,
     "\\$&"
   );
 }
 
 /**
- * Extract price filters.
+ * Normalize price text.
  *
- * Supported forms:
- * - under ₹1000
- * - below ₹1000
- * - less than ₹1000
- * - up to ₹1000
- * - above ₹500
- * - over ₹500
- * - more than ₹500
- * - between ₹500 and ₹1000
- * - from ₹500 to ₹1000
+ * Examples:
  *
- * normalizeQuery() removes the actual ₹ symbol
- * and thousands separators before parsing.
+ * ₹1000
+ * Rs 1000
+ * Rs. 1000
+ * INR 1000
+ *
+ * become numeric-searchable text.
  */
-function extractPriceFilters(query) {
-  const normalized = normalizeQuery(query);
-
-  const filters = {
-    minPrice: null,
-    maxPrice: null
-  };
-
-  /**
-   * Between X and Y / From X to Y
-   */
-  const betweenMatch = normalized.match(
-    /(?:between|from)\s+(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s+(?:and|to|-)\s+(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)/i
-  );
-
-  if (betweenMatch) {
-    const first = Number(
-      betweenMatch[1]
-    );
-
-    const second = Number(
-      betweenMatch[2]
-    );
-
-    filters.minPrice = Math.min(
-      first,
-      second
-    );
-
-    filters.maxPrice = Math.max(
-      first,
-      second
-    );
-
-    return filters;
-  }
-
-  /**
-   * Maximum price
-   */
-  const maxMatch = normalized.match(
-    /(?:under|below|less than|up to|upto)\s+(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)/i
-  );
-
-  if (maxMatch) {
-    filters.maxPrice = Number(
-      maxMatch[1]
-    );
-  }
-
-  /**
-   * Minimum price
-   */
-  const minMatch = normalized.match(
-    /(?:over|above|more than)\s+(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)/i
-  );
-
-  if (minMatch) {
-    filters.minPrice = Number(
-      minMatch[1]
-    );
-  }
-
-  return filters;
+function normalizePriceText(query) {
+  return normalizeText(query)
+    .replace(/₹/g, " ")
+    .replace(/\bRs\.?\b/gi, " ")
+    .replace(/\bINR\b/gi, " ")
+    .replace(/,/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
- * Extract an Indian state.
+ * Extract price filters.
  *
- * Multi-word states are matched as complete phrases.
+ * Supported:
+ *
+ * under 1000
+ * below 1000
+ * less than 1000
+ * up to 1000
+ *
+ * above 1000
+ * over 1000
+ * more than 1000
+ * starting from 1000
+ *
+ * between 500 and 1500
+ * between ₹500 and ₹1500
+ * between Rs 500 and Rs 1500
+ * between INR 500 and INR 1500
+ *
+ * from 500 to 1500
+ * from ₹500 to ₹1500
+ */
+function extractPriceFilters(query) {
+  const text = normalizePriceText(query);
+
+  let minPrice = null;
+  let maxPrice = null;
+
+  /*
+   * -------------------------------------------------------
+   * RANGE
+   * -------------------------------------------------------
+   *
+   * Example:
+   *
+   * jewelry from Rajasthan between ₹1000 and ₹3000
+   *
+   * After currency normalization:
+   *
+   * jewelry from Rajasthan between 1000 and 3000
+   */
+  const rangeMatch = text.match(
+    /\b(?:between|from)\s+(\d+(?:\.\d+)?)\s*(?:and|to|-)\s*(\d+(?:\.\d+)?)\b/i
+  );
+
+  if (rangeMatch) {
+    minPrice = Number(rangeMatch[1]);
+    maxPrice = Number(rangeMatch[2]);
+  }
+
+  /*
+   * -------------------------------------------------------
+   * MAXIMUM PRICE
+   * -------------------------------------------------------
+   */
+  const maxMatch = text.match(
+    /\b(?:under|below|less\s+than|up\s+to|max(?:imum)?(?:\s+price)?)\s+(\d+(?:\.\d+)?)\b/i
+  );
+
+  if (maxMatch) {
+    maxPrice = Number(maxMatch[1]);
+  }
+
+  /*
+   * -------------------------------------------------------
+   * MINIMUM PRICE
+   * -------------------------------------------------------
+   */
+  const minMatch = text.match(
+    /\b(?:above|over|more\s+than|starting\s+from|minimum(?:\s+price)?)\s+(\d+(?:\.\d+)?)\b/i
+  );
+
+  if (minMatch) {
+    minPrice = Number(minMatch[1]);
+  }
+
+  /*
+   * Validate minimum price.
+   */
+  if (
+    minPrice !== null &&
+    (
+      !Number.isFinite(minPrice) ||
+      minPrice < 0
+    )
+  ) {
+    minPrice = null;
+  }
+
+  /*
+   * Validate maximum price.
+   */
+  if (
+    maxPrice !== null &&
+    (
+      !Number.isFinite(maxPrice) ||
+      maxPrice < 0
+    )
+  ) {
+    maxPrice = null;
+  }
+
+  /*
+   * Normalize reversed ranges.
+   *
+   * Example:
+   *
+   * between 3000 and 1000
+   *
+   * becomes:
+   *
+   * minPrice = 1000
+   * maxPrice = 3000
+   */
+  if (
+    minPrice !== null &&
+    maxPrice !== null &&
+    minPrice > maxPrice
+  ) {
+    const temp = minPrice;
+
+    minPrice = maxPrice;
+    maxPrice = temp;
+  }
+
+  return {
+    minPrice,
+    maxPrice,
+  };
+}
+
+/**
+ * Extract an Indian state from the query.
  */
 function extractState(query) {
-  const normalized = normalizeQuery(query);
+  const normalizedQuery =
+    normalizeText(query).toLowerCase();
 
-  const states = [
-    ...INDIAN_STATES
+  /*
+   * Longer names first.
+   *
+   * Example:
+   * "Uttar Pradesh"
+   * should be checked before "Uttar".
+   */
+  const sortedStates = [
+    ...INDIAN_STATES,
   ].sort(
     (a, b) => b.length - a.length
   );
 
-  for (const state of states) {
-    const stateRegex = new RegExp(
-      `\\b${escapeRegExp(
+  for (const state of sortedStates) {
+    const pattern = new RegExp(
+      `\\b${escapeRegex(
         state.toLowerCase()
       )}\\b`,
       "i"
     );
 
-    if (
-      stateRegex.test(normalized)
-    ) {
+    if (pattern.test(normalizedQuery)) {
       return state;
     }
   }
@@ -244,60 +330,34 @@ function extractState(query) {
 }
 
 /**
- * Remove complete Indian state phrases
- * before extracting keywords.
- */
-function removeStateFromQuery(query) {
-  let result = normalizeQuery(query);
-
-  const states = [
-    ...INDIAN_STATES
-  ].sort(
-    (a, b) => b.length - a.length
-  );
-
-  for (const state of states) {
-    const stateRegex = new RegExp(
-      `\\b${escapeRegExp(
-        state.toLowerCase()
-      )}\\b`,
-      "gi"
-    );
-
-    result = result.replace(
-      stateRegex,
-      " "
-    );
-  }
-
-  return result
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/**
- * Extract product category.
+ * Extract a product category.
  */
 function extractCategory(query) {
-  const normalized = normalizeQuery(query);
+  const normalizedQuery =
+    normalizeText(query).toLowerCase();
 
-  const categories = [
-    ...PRODUCT_CATEGORIES
+  /*
+   * Longer categories first.
+   *
+   * Example:
+   * "home decor"
+   * should be detected as one category.
+   */
+  const sortedCategories = [
+    ...PRODUCT_CATEGORIES,
   ].sort(
     (a, b) => b.length - a.length
   );
 
-  for (const category of categories) {
-    const categoryRegex = new RegExp(
-      `\\b${escapeRegExp(
-        category
+  for (const category of sortedCategories) {
+    const pattern = new RegExp(
+      `\\b${escapeRegex(
+        category.toLowerCase()
       )}\\b`,
       "i"
     );
 
-    if (
-      categoryRegex.test(normalized)
-    ) {
+    if (pattern.test(normalizedQuery)) {
       return category;
     }
   }
@@ -306,87 +366,171 @@ function extractCategory(query) {
 }
 
 /**
- * Extract keywords.
+ * Extract meaningful search keywords.
  *
- * State phrases are removed BEFORE splitting
- * the query into keywords.
+ * Example:
+ *
+ * traditional handmade gifts from Bihar
+ *
+ * becomes:
+ *
+ * ["traditional", "handmade", "gifts"]
+ *
+ * State/category/filter words are removed.
  */
-function extractKeywords(query) {
-  let cleanedQuery =
-    removeStateFromQuery(query);
+function extractKeywords(
+  query,
+  state,
+  category
+) {
+  let cleaned =
+    normalizeText(query).toLowerCase();
 
-  /**
-   * Remove categories from keywords.
+  /*
+   * Remove currency symbols.
    */
-  const categories = [
-    ...PRODUCT_CATEGORIES
-  ].sort(
-    (a, b) => b.length - a.length
+  cleaned = cleaned.replace(
+    /₹/g,
+    " "
   );
 
-  for (const category of categories) {
-    const categoryRegex = new RegExp(
-      `\\b${escapeRegExp(
-        category
-      )}\\b`,
-      "gi"
-    );
+  /*
+   * Remove currency names.
+   */
+  cleaned = cleaned.replace(
+    /\b(?:rs|inr)\.?\b/gi,
+    " "
+  );
 
-    cleanedQuery =
-      cleanedQuery.replace(
-        categoryRegex,
-        " "
-      );
+  /*
+   * Remove numeric values.
+   */
+  cleaned = cleaned.replace(
+    /\d+(?:\.\d+)?/g,
+    " "
+  );
+
+  /*
+   * Remove price/filter words.
+   */
+  const filterWords = [
+    "under",
+    "below",
+    "less",
+    "than",
+    "above",
+    "over",
+    "more",
+    "between",
+    "from",
+    "and",
+    "to",
+    "up",
+    "maximum",
+    "max",
+    "minimum",
+    "min",
+    "price",
+    "prices",
+    "starting",
+    "range",
+  ];
+
+  for (const word of filterWords) {
+    cleaned = cleaned.replace(
+      new RegExp(
+        `\\b${escapeRegex(word)}\\b`,
+        "gi"
+      ),
+      " "
+    );
   }
 
-  /**
-   * Remove price expressions.
-   *
-   * normalizeQuery() has already converted:
-   * ₹1,000 -> 1000
+  /*
+   * Remove detected state.
    */
-  cleanedQuery = cleanedQuery
-    .replace(
-      /(?:under|below|less than|up to|upto|over|above|more than|between|from)\s+(?:rs\.?|inr)?\s*\d+(?:\.\d+)?/gi,
-      " "
-    )
-    .replace(
-      /(?:rs\.?|inr)\s*\d+(?:\.\d+)?/gi,
-      " "
-    )
-    .replace(
-      /\d+(?:\.\d+)?/g,
+  if (state) {
+    cleaned = cleaned.replace(
+      new RegExp(
+        `\\b${escapeRegex(
+          state.toLowerCase()
+        )}\\b`,
+        "gi"
+      ),
       " "
     );
+  }
 
-  const words = cleanedQuery
-    .split(/\s+/)
-    .map(word => word.trim())
+  /*
+   * Remove detected category.
+   */
+  if (category) {
+    cleaned = cleaned.replace(
+      new RegExp(
+        `\\b${escapeRegex(
+          category.toLowerCase()
+        )}\\b`,
+        "gi"
+      ),
+      " "
+    );
+  }
+
+  /*
+   * Split remaining text into words.
+   */
+  const words = cleaned
+    .split(/[^a-zA-Z0-9]+/)
+    .map(
+      (word) => word.trim()
+    )
     .filter(Boolean)
     .filter(
-      word => !STOP_WORDS.has(word)
+      (word) =>
+        !STOP_WORDS.has(word)
     )
     .filter(
-      word => word.length > 1
+      (word) =>
+        word.length > 1
     );
 
+  /*
+   * Remove duplicates while preserving order.
+   */
   return [
-    ...new Set(words)
+    ...new Set(words),
   ];
 }
 
 /**
- * Parse a natural-language search query
- * into structured filters.
+ * Main search parser.
+ *
+ * Output:
+ *
+ * {
+ *   state: string | null,
+ *   category: string | null,
+ *   minPrice: number | null,
+ *   maxPrice: number | null,
+ *   keywords: string[]
+ * }
  */
 function parseSearchQuery(query) {
   const normalizedQuery =
-    normalizeQuery(query);
+    normalizeText(query);
 
-  const priceFilters =
-    extractPriceFilters(
-      normalizedQuery
-    );
+  /*
+   * Empty query.
+   */
+  if (!normalizedQuery) {
+    return {
+      state: null,
+      category: null,
+      minPrice: null,
+      maxPrice: null,
+      keywords: [],
+    };
+  }
 
   const state =
     extractState(
@@ -398,29 +542,47 @@ function parseSearchQuery(query) {
       normalizedQuery
     );
 
+  const {
+    minPrice,
+    maxPrice,
+  } = extractPriceFilters(
+    normalizedQuery
+  );
+
   const keywords =
     extractKeywords(
-      normalizedQuery
+      normalizedQuery,
+      state,
+      category
     );
 
   return {
     state,
-    minPrice:
-      priceFilters.minPrice,
-    maxPrice:
-      priceFilters.maxPrice,
+    category,
+    minPrice,
+    maxPrice,
     keywords,
-    category
   };
 }
 
-export {
-  parseSearchQuery,
-  normalizeQuery,
+
+/* =========================================================
+   EXPORTS
+========================================================= */
+
+module.exports = {
+  INDIAN_STATES,
+  PRODUCT_CATEGORIES,
+  STOP_WORDS,
+
+  normalizeText,
+  escapeRegex,
+  normalizePriceText,
+
   extractPriceFilters,
   extractState,
   extractCategory,
   extractKeywords,
-  INDIAN_STATES,
-  PRODUCT_CATEGORIES
+
+  parseSearchQuery,
 };

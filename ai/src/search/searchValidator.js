@@ -1,143 +1,148 @@
 /**
+ * ARTISAN AI
  * Search Validator
  *
  * Validates structured search filters.
  *
- * IMPORTANT:
- * - This validator does NOT access the database.
- * - This validator does NOT create products.
- * - This validator does NOT interpret natural language.
+ * This module does not access the database.
  */
 
-function validateSearchFilters(filters) {
-  const errors = [];
+function isNullableString(value) {
+  return (
+    value === undefined ||
+    value === null ||
+    (
+      typeof value === "string" &&
+      value.trim().length > 0
+    )
+  );
+}
 
+function validateSearchFilters(filters) {
   if (
     !filters ||
     typeof filters !== "object" ||
     Array.isArray(filters)
   ) {
-    return {
-      valid: false,
-      errors: [
-        "Search filters must be an object."
-      ]
-    };
+    return false;
   }
 
-  /*
-   * State
-   */
+  const {
+    state,
+    category,
+    minPrice,
+    maxPrice,
+    keywords,
+  } = filters;
+
+  if (!isNullableString(state)) {
+    return false;
+  }
+
+  if (!isNullableString(category)) {
+    return false;
+  }
+
   if (
-    filters.state !== null &&
-    filters.state !== undefined
+    minPrice !== undefined &&
+    minPrice !== null
   ) {
     if (
-      typeof filters.state !== "string" ||
-      filters.state.trim() === ""
+      typeof minPrice !== "number" ||
+      !Number.isFinite(minPrice) ||
+      minPrice < 0
     ) {
-      errors.push(
-        "State must be a non-empty string or null."
-      );
+      return false;
     }
   }
 
-  /*
-   * Category
-   */
   if (
-    filters.category !== null &&
-    filters.category !== undefined
+    maxPrice !== undefined &&
+    maxPrice !== null
   ) {
     if (
-      typeof filters.category !== "string" ||
-      filters.category.trim() === ""
+      typeof maxPrice !== "number" ||
+      !Number.isFinite(maxPrice) ||
+      maxPrice < 0
     ) {
-      errors.push(
-        "Category must be a non-empty string or null."
-      );
+      return false;
     }
   }
 
-  /*
-   * Keywords
-   */
   if (
-    !Array.isArray(filters.keywords)
+    minPrice !== undefined &&
+    minPrice !== null &&
+    maxPrice !== undefined &&
+    maxPrice !== null &&
+    minPrice > maxPrice
   ) {
-    errors.push(
-      "Keywords must be an array."
-    );
-  } else {
-    filters.keywords.forEach(
-      (keyword, index) => {
-        if (
-          typeof keyword !== "string" ||
-          keyword.trim() === ""
-        ) {
-          errors.push(
-            `Keyword at index ${index} must be a non-empty string.`
-          );
-        }
-      }
-    );
+    return false;
   }
 
-  /*
-   * Minimum price
-   */
-  if (
-    filters.minPrice !== null &&
-    filters.minPrice !== undefined
-  ) {
+  if (!Array.isArray(keywords)) {
+    return false;
+  }
+
+  const normalizedKeywords = new Set();
+
+  for (const keyword of keywords) {
     if (
-      typeof filters.minPrice !== "number" ||
-      !Number.isFinite(filters.minPrice) ||
-      filters.minPrice < 0
+      typeof keyword !== "string" ||
+      keyword.trim().length === 0
     ) {
-      errors.push(
-        "Minimum price must be a finite non-negative number or null."
-      );
+      return false;
     }
+
+    const normalized =
+      keyword.trim().toLowerCase();
+
+    if (normalizedKeywords.has(normalized)) {
+      return false;
+    }
+
+    normalizedKeywords.add(normalized);
   }
 
-  /*
-   * Maximum price
-   */
-  if (
-    filters.maxPrice !== null &&
-    filters.maxPrice !== undefined
-  ) {
-    if (
-      typeof filters.maxPrice !== "number" ||
-      !Number.isFinite(filters.maxPrice) ||
-      filters.maxPrice < 0
-    ) {
-      errors.push(
-        "Maximum price must be a finite non-negative number or null."
-      );
-    }
-  }
+  return true;
+}
 
-  /*
-   * Price range
-   */
-  if (
-    typeof filters.minPrice === "number" &&
-    typeof filters.maxPrice === "number" &&
-    filters.minPrice > filters.maxPrice
-  ) {
-    errors.push(
-      "Minimum price cannot be greater than maximum price."
-    );
+function normalizeSearchFilters(filters) {
+  if (!validateSearchFilters(filters)) {
+    return null;
   }
 
   return {
-    valid: errors.length === 0,
-    errors
+    state:
+      filters.state === undefined ||
+      filters.state === null
+        ? null
+        : filters.state.trim(),
+
+    category:
+      filters.category === undefined ||
+      filters.category === null
+        ? null
+        : filters.category.trim(),
+
+    minPrice:
+      filters.minPrice === undefined ||
+      filters.minPrice === null
+        ? null
+        : filters.minPrice,
+
+    maxPrice:
+      filters.maxPrice === undefined ||
+      filters.maxPrice === null
+        ? null
+        : filters.maxPrice,
+
+    keywords: filters.keywords.map(
+      (keyword) => keyword.trim().toLowerCase()
+    ),
   };
 }
 
-export {
-  validateSearchFilters
+module.exports = {
+  validateSearchFilters,
+  normalizeSearchFilters,
 };
