@@ -8,11 +8,15 @@
  *      ↓
  * Shared AI provider
  *      ↓
- * Structured search filters
+ * AI structured filters
  *      ↓
- * Backend
+ * Normalize
  *      ↓
- * Database
+ * Strict validation
+ *      ↓
+ * Mayank backend
+ *      ↓
+ * PostgreSQL
  *      ↓
  * Real products
  *
@@ -35,10 +39,12 @@ function createSearchAIError(
 ) {
   return {
     success: false,
+
     error: {
       code,
       message,
     },
+
     filters: null,
   };
 }
@@ -105,21 +111,35 @@ async function parseSearchQueryWithAI(
     );
   }
 
-  if (
-    !validateSearchFilters(rawFilters)
-  ) {
+  /*
+   * Normalize first.
+   *
+   * This handles:
+   * - reversed price ranges
+   * - canonical state names
+   * - canonical category names
+   * - keyword normalization
+   */
+  const normalizedFilters =
+    normalizeSearchFilters(
+      rawFilters
+    );
+
+  if (!normalizedFilters) {
     return createSearchAIError(
       "INVALID_AI_SEARCH_OUTPUT",
       "AI returned invalid search filters."
     );
   }
 
-  const filters =
-    normalizeSearchFilters(
-      rawFilters
-    );
-
-  if (!filters) {
+  /*
+   * Strict validation happens AFTER normalization.
+   */
+  if (
+    !validateSearchFilters(
+      normalizedFilters
+    )
+  ) {
     return createSearchAIError(
       "INVALID_AI_SEARCH_OUTPUT",
       "AI returned invalid search filters."
@@ -128,16 +148,17 @@ async function parseSearchQueryWithAI(
 
   return {
     success: true,
-    filters,
+    filters: normalizedFilters,
   };
 }
 
 /**
  * Controlled AI Search response.
  *
- * This function intentionally returns filters only.
- * The backend is responsible for using those filters
- * to query real Product records.
+ * Only structured filters are returned.
+ *
+ * The backend is responsible for querying
+ * real Product records.
  */
 async function aiSearch(
   provider,
@@ -155,7 +176,8 @@ async function aiSearch(
 
   return {
     success: true,
-    interpretedFilters: result.filters,
+    interpretedFilters:
+      result.filters,
   };
 }
 

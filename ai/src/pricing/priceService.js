@@ -1,43 +1,49 @@
 /**
  * ARTISAN AI
- * Pricing Service
+ * Price Recommendation Service
  *
- * Ownership:
- * Shivani — AI Search + Pricing
- *
- * Architecture:
- *
- * Input
- *   ↓
- * Pricing validation
- *   ↓
- * Shared AI provider
- *   ↓
- * Structured JSON
- *   ↓
- * Recommendation validation
- *   ↓
- * Advisory recommendation
+ * Responsibility:
+ * - Validate pricing input
+ * - Request a structured recommendation from the shared AI provider
+ * - Validate the AI recommendation
+ * - Return an advisory recommendation to the backend
  *
  * IMPORTANT:
- * - No PostgreSQL.
- * - No Prisma.
- * - No direct database access.
- * - No finalPrice.
- * - No product publishing.
- * - Artisan decides the final price.
+ * - This service does NOT access PostgreSQL or Prisma.
+ * - This service does NOT decide the artisan's final price.
+ * - This service does NOT store prices.
+ * - This service must use the shared AI provider supplied by the caller.
+ *
+ * Integration flow:
+ *
+ * Product information
+ *   ↓
+ * priceService
+ *   ↓
+ * shared AI provider
+ *   ↓
+ * structured recommendation
+ *   ↓
+ * validation
+ *   ↓
+ * artisan reviews recommendation
+ *   ↓
+ * artisan chooses final price
+ *   ↓
+ * Mayank's backend/controller stores the artisan-approved final price
+ *
+ * The backend/controller is responsible for mapping this internal
+ * recommendation structure to the locked API response contract.
  */
-
-const {
-  PRICE_SYSTEM_PROMPT,
-  buildPriceUserPrompt,
-} = require("./pricePrompt");
 
 const {
   validatePricingInput,
   validatePricingRecommendation,
 } = require("./priceValidator");
 
+/**
+ * Create a controlled pricing-service error.
+ */
 function createPricingError(code, message) {
   return {
     success: false,
@@ -50,59 +56,85 @@ function createPricingError(code, message) {
   };
 }
 
-function validateProvider(provider) {
-  return (
-    provider &&
-    typeof provider.generateStructuredJSON === "function"
-  );
-}
-
-async function getPriceRecommendation(provider, input) {
-  if (!validateProvider(provider)) {
+/**
+ * Generate an AI-assisted price recommendation.
+ *
+ * @param {Object} input
+ * @param {Object} provider
+ * @returns {Promise<Object>}
+ */
+async function generatePriceRecommendation(input, provider) {
+  /**
+   * Validate provider before doing any AI work.
+   */
+  if (
+    !provider ||
+    typeof provider.generateStructuredJSON !== "function"
+  ) {
     return createPricingError(
       "INVALID_PROVIDER",
-      "A valid shared AI provider is required."
+      "AI price recommendation is temporarily unavailable. Please enter or review the price manually."
     );
   }
 
-  if (!validatePricingInput(input)) {
+  /**
+   * Validate pricing input.
+   */
+  try {
+    validatePricingInput(input);
+  } catch (error) {
     return createPricingError(
-      "INVALID_PRICING_INPUT",
-      "Invalid pricing input."
+      "INVALID_INPUT",
+      error.message
     );
   }
+
+  /**
+   * Keep the AI prompt construction local to the pricing feature.
+   *
+   * The provider itself remains shared across AI features.
+   */
+  const {
+    buildPricingSystemPrompt,
+    buildPricingUserPrompt,
+  } = require("./pricePrompt");
+
+  const systemPrompt = buildPricingSystemPrompt();
+  const userPrompt = buildPricingUserPrompt(input);
 
   let rawRecommendation;
 
   try {
-    rawRecommendation = await provider.generateStructuredJSON({
-      systemPrompt: PRICE_SYSTEM_PROMPT,
-      userPrompt: buildPriceUserPrompt(input),
-      input,
-    });
+    rawRecommendation =
+      await provider.generateStructuredJSON({
+        systemPrompt,
+        userPrompt,
+        input,
+      });
   } catch (error) {
     return createPricingError(
-      error && error.code
-        ? error.code
-        : "AI_PROVIDER_ERROR",
-      error && error.message
-        ? error.message
-        : "AI price recommendation is temporarily unavailable. Please enter or review the price manually."
+      "PROVIDER_ERROR",
+      "AI price recommendation is temporarily unavailable. Please enter or review the price manually."
     );
   }
 
-  if (!validatePricingRecommendation(rawRecommendation)) {
+  /**
+   * Validate the AI-generated recommendation before
+   * returning it to the backend.
+   */
+  try {
+    validatePricingRecommendation(rawRecommendation);
+  } catch (error) {
     return createPricingError(
-      "INVALID_AI_PRICING_OUTPUT",
-      "AI returned an invalid pricing recommendation."
+      "INVALID_AI_RESPONSE",
+      "AI price recommendation is temporarily unavailable. Please enter or review the price manually."
     );
   }
 
-  /*
-   * Return only the advisory recommendation.
+  /**
+   * AI remains advisory.
    *
-   * The backend is responsible for storing the artisan-approved
-   * final price.
+   * There is intentionally NO finalPrice here.
    */
   return {
     success: true,
@@ -112,16 +144,14 @@ async function getPriceRecommendation(provider, input) {
         min: rawRecommendation.priceRange.min,
         max: rawRecommendation.priceRange.max,
       },
-      reason: rawRecommendation.reason.trim(),
+      reason: rawRecommendation.reason,
       confidence: rawRecommendation.confidence,
     },
-    isRecommendation: true,
     artisanDecidesFinalPrice: true,
   };
 }
 
 module.exports = {
-  getPriceRecommendation,
+  generatePriceRecommendation,
   createPricingError,
-  validateProvider,
 };

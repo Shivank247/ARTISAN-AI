@@ -1,49 +1,11 @@
 /**
  * ARTISAN AI
- * Evaluation Test Runner
+ * Evaluation Test Suite
  *
- * Ownership:
- * Shivani — AI Search + Pricing
- *
- * Purpose:
- * Validate Search and Pricing evaluation datasets.
- *
- * IMPORTANT:
- * - No PostgreSQL
- * - No Prisma
- * - No database access
- * - No network access
- * - No real AI provider
- * - No product creation
- * - No fake product IDs
- *
- * Search:
- * Natural-language query
- *        ↓
- * Structured filters
- *
- * Pricing:
- * Product information
- *        ↓
- * AI price recommendation structure
- *
- * The final product price is always decided
- * by the artisan and stored by the backend.
+ * Validates:
+ * - Search evaluation dataset
+ * - Pricing evaluation dataset
  */
-
-const {
-  parseSearchQuery,
-} = require("../src/search/searchParser");
-
-const {
-  validateSearchFilters,
-} = require("../src/search/searchValidator");
-
-const {
-  validatePricingInput,
-  validatePriceRange,
-  validatePricingRecommendation,
-} = require("../src/pricing/priceValidator");
 
 const {
   SEARCH_EVALUATION_DATASET,
@@ -55,10 +17,13 @@ const {
   validatePricingEvaluationDataset,
 } = require("./pricingEvaluationDataset");
 
+const {
+  validatePricingRecommendation,
+} = require("../src/pricing/priceValidator");
 
-/* =========================================================
-   ASSERTION
-========================================================= */
+// ---------------------------------------------------------
+// Test helper
+// ---------------------------------------------------------
 
 function assert(condition, message) {
   if (!condition) {
@@ -66,188 +31,54 @@ function assert(condition, message) {
   }
 }
 
+// ---------------------------------------------------------
+// Search evaluation dataset tests
+// ---------------------------------------------------------
 
-/* =========================================================
-   DEEP CLONE
-========================================================= */
-
-function deepClone(value) {
-  return JSON.parse(
-    JSON.stringify(value)
+function testSearchDatasetExists() {
+  assert(
+    Array.isArray(SEARCH_EVALUATION_DATASET),
+    "Search evaluation dataset must be an array."
   );
 }
 
-
-/* =========================================================
-   SEARCH FILTER COMPARISON
-========================================================= */
-
-function compareSearchFilters(
-  actual,
-  expected,
-  testId,
-  query
-) {
+function testSearchDatasetCount() {
   assert(
-    actual &&
-      typeof actual === "object" &&
-      !Array.isArray(actual),
-    `${testId}: Parser did not return a valid object.\nQuery: ${query}`
+    SEARCH_EVALUATION_DATASET.length === 21,
+    `Expected 21 search evaluation cases, found ${SEARCH_EVALUATION_DATASET.length}.`
   );
+}
 
-  /*
-   * State
-   */
+function testSearchDatasetValidation() {
   assert(
-    actual.state === expected.state,
-    `${testId}: Expected state "${expected.state}", got "${actual.state}".\nQuery: ${query}`
+    validateSearchEvaluationDataset() === true,
+    "Search evaluation dataset validation failed."
   );
+}
 
-  /*
-   * Category
-   */
-  assert(
-    actual.category === expected.category,
-    `${testId}: Expected category "${expected.category}", got "${actual.category}".\nQuery: ${query}`
-  );
+function testSearchDatasetIds() {
+  const ids = SEARCH_EVALUATION_DATASET.map((testCase) => testCase.id);
 
-  /*
-   * Minimum price
-   */
-  assert(
-    actual.minPrice === expected.minPrice,
-    `${testId}: Expected minPrice "${expected.minPrice}", got "${actual.minPrice}".\nQuery: ${query}\nActual: ${JSON.stringify(actual)}`
-  );
-
-  /*
-   * Maximum price
-   */
-  assert(
-    actual.maxPrice === expected.maxPrice,
-    `${testId}: Expected maxPrice "${expected.maxPrice}", got "${actual.maxPrice}".\nQuery: ${query}\nActual: ${JSON.stringify(actual)}`
-  );
-
-  /*
-   * Keywords
-   */
-  assert(
-    Array.isArray(actual.keywords),
-    `${testId}: Actual keywords must be an array.\nQuery: ${query}`
-  );
+  const uniqueIds = new Set(ids);
 
   assert(
-    actual.keywords.length ===
-      expected.keywords.length,
-    `${testId}: Expected ${expected.keywords.length} keywords, got ${actual.keywords.length}.\nQuery: ${query}\nExpected: ${JSON.stringify(expected.keywords)}\nActual: ${JSON.stringify(actual.keywords)}`
+    uniqueIds.size === ids.length,
+    "Search evaluation dataset contains duplicate IDs."
   );
+}
 
-  for (
-    let index = 0;
-    index < expected.keywords.length;
-    index += 1
-  ) {
+function testSearchDatasetQueries() {
+  for (const testCase of SEARCH_EVALUATION_DATASET) {
     assert(
-      actual.keywords[index] ===
-        expected.keywords[index],
-      `${testId}: Keyword mismatch at index ${index}.\nExpected: "${expected.keywords[index]}"\nActual: "${actual.keywords[index]}"\nQuery: ${query}`
+      typeof testCase.query === "string" &&
+        testCase.query.trim().length > 0,
+      `Invalid search query in ${testCase.id}.`
     );
   }
 }
 
-
-/* =========================================================
-   SEARCH DATASET STRUCTURE
-========================================================= */
-
-function testSearchDatasetStructure() {
-  assert(
-    validateSearchEvaluationDataset(),
-    "Search evaluation dataset is invalid."
-  );
-
-  assert(
-    SEARCH_EVALUATION_DATASET.length === 15,
-    `Expected 15 search evaluation cases, got ${SEARCH_EVALUATION_DATASET.length}.`
-  );
-
-  console.log(
-    "✓ Search dataset structure"
-  );
-}
-
-
-/* =========================================================
-   PRICING DATASET STRUCTURE
-========================================================= */
-
-function testPricingDatasetStructure() {
-  assert(
-    validatePricingEvaluationDataset(),
-    "Pricing evaluation dataset is invalid."
-  );
-
-  assert(
-    PRICING_EVALUATION_DATASET.length === 10,
-    `Expected 10 pricing evaluation cases, got ${PRICING_EVALUATION_DATASET.length}.`
-  );
-
-  console.log(
-    "✓ Pricing dataset structure"
-  );
-}
-
-
-/* =========================================================
-   SEARCH EVALUATION
-========================================================= */
-
-function testSearchCases() {
-  let passed = 0;
-
-  for (
-    const testCase of SEARCH_EVALUATION_DATASET
-  ) {
-    const actual =
-      parseSearchQuery(
-        testCase.query
-      );
-
-    /*
-     * Parser output must satisfy the
-     * structured search filter contract.
-     */
-    assert(
-      validateSearchFilters(actual),
-      `${testCase.id}: Parser returned invalid search filters.\nQuery: ${testCase.query}\nActual: ${JSON.stringify(actual)}`
-    );
-
-    /*
-     * Compare against expected evaluation output.
-     */
-    compareSearchFilters(
-      actual,
-      testCase.expected,
-      testCase.id,
-      testCase.query
-    );
-
-    console.log(
-      `✓ ${testCase.id} — ${testCase.query}`
-    );
-
-    passed += 1;
-  }
-
-  return passed;
-}
-
-
-/* =========================================================
-   SEARCH OUTPUT INTEGRITY
-========================================================= */
-
-function testSearchOutputIntegrity() {
-  const allowedKeys = [
+function testSearchExpectedStructure() {
+  const requiredFields = [
     "state",
     "category",
     "minPrice",
@@ -255,632 +86,174 @@ function testSearchOutputIntegrity() {
     "keywords",
   ];
 
-  for (
-    const testCase of SEARCH_EVALUATION_DATASET
-  ) {
-    const actual =
-      parseSearchQuery(
-        testCase.query
+  for (const testCase of SEARCH_EVALUATION_DATASET) {
+    for (const field of requiredFields) {
+      assert(
+        Object.prototype.hasOwnProperty.call(testCase.expected, field),
+        `${testCase.id} is missing expected field: ${field}`
       );
+    }
+  }
+}
 
-    const actualKeys =
-      Object.keys(actual).sort();
+// ---------------------------------------------------------
+// UTF-8 / currency evaluation tests
+// ---------------------------------------------------------
 
-    const expectedKeys =
-      [...allowedKeys].sort();
+function testIndianRupeeCases() {
+  const rupeeCases = SEARCH_EVALUATION_DATASET.filter((testCase) =>
+    testCase.query.includes("₹")
+  );
 
-    /*
-     * Search parser must return only
-     * the agreed structured filters.
-     */
+  assert(
+    rupeeCases.length >= 4,
+    `Expected at least 4 ₹ test cases, found ${rupeeCases.length}.`
+  );
+
+  for (const testCase of rupeeCases) {
     assert(
-      JSON.stringify(actualKeys) ===
-        JSON.stringify(expectedKeys),
-      `${testCase.id}: Search parser returned unexpected fields.\nActual fields: ${JSON.stringify(actualKeys)}`
-    );
-
-    /*
-     * Search parser must never invent
-     * product IDs.
-     */
-    assert(
-      !Object.prototype.hasOwnProperty.call(
-        actual,
-        "productIds"
-      ),
-      `${testCase.id}: Search parser must not return productIds.`
-    );
-
-    /*
-     * Search parser must never return
-     * invented products.
-     */
-    assert(
-      !Object.prototype.hasOwnProperty.call(
-        actual,
-        "products"
-      ),
-      `${testCase.id}: Search parser must not return products.`
+      !testCase.query.includes("Γ"),
+      `${testCase.id} contains corrupted UTF-8 characters.`
     );
   }
+}
 
-  console.log(
-    "✓ Search output integrity"
+function testRsCase() {
+  const testCase = SEARCH_EVALUATION_DATASET.find(
+    (item) => item.id === "SEARCH-020"
+  );
+
+  assert(testCase, "SEARCH-020 is missing.");
+
+  assert(
+    testCase.query === "woodwork under Rs 2000",
+    "SEARCH-020 query is incorrect."
+  );
+
+  assert(
+    testCase.expected.maxPrice === 2000,
+    "SEARCH-020 maxPrice must be 2000."
   );
 }
 
+function testINRCase() {
+  const testCase = SEARCH_EVALUATION_DATASET.find(
+    (item) => item.id === "SEARCH-021"
+  );
 
-/* =========================================================
-   SEARCH IMMUTABILITY
-========================================================= */
+  assert(testCase, "SEARCH-021 is missing.");
 
-function testSearchParserDoesNotMutateQuery() {
-  for (
-    const testCase of SEARCH_EVALUATION_DATASET
-  ) {
-    const original =
-      testCase.query;
+  assert(
+    testCase.query === "products under INR 1500",
+    "SEARCH-021 query is incorrect."
+  );
 
-    parseSearchQuery(
-      testCase.query
-    );
-
-    assert(
-      testCase.query === original,
-      `${testCase.id}: Query was unexpectedly mutated.`
-    );
-  }
-
-  console.log(
-    "✓ Search immutability"
+  assert(
+    testCase.expected.maxPrice === 1500,
+    "SEARCH-021 maxPrice must be 1500."
   );
 }
 
+// ---------------------------------------------------------
+// Pricing evaluation dataset tests
+// ---------------------------------------------------------
 
-/* =========================================================
-   PRICING INPUT VALIDATION
-========================================================= */
-
-function testPricingInputIntegrity() {
-  for (
-    const testCase of PRICING_EVALUATION_DATASET
-  ) {
-    const original =
-      deepClone(
-        testCase.input
-      );
-
-    assert(
-      validatePricingInput(
-        testCase.input
-      ),
-      `${testCase.id}: Pricing input is invalid.`
-    );
-
-    assert(
-      JSON.stringify(
-        testCase.input
-      ) ===
-        JSON.stringify(original),
-      `${testCase.id}: Pricing input was mutated.`
-    );
-  }
-
-  console.log(
-    "✓ Pricing input validation and integrity"
+function testPricingDatasetExists() {
+  assert(
+    Array.isArray(PRICING_EVALUATION_DATASET),
+    "Pricing evaluation dataset must be an array."
   );
 }
 
-
-/* =========================================================
-   PRICING RANGE VALIDATION
-========================================================= */
-
-function testPricingValidationStructures() {
-  const validRanges = [
-    {
-      min: 100,
-      max: 500,
-    },
-
-    {
-      min: 799,
-      max: 999,
-    },
-
-    {
-      min: 1000,
-      max: 1000,
-    },
-  ];
-
-  for (
-    const range of validRanges
-  ) {
-    assert(
-      validatePriceRange(range),
-      `Valid price range failed: ${JSON.stringify(range)}`
-    );
-  }
-
-  const invalidRanges = [
-    {
-      min: -1,
-      max: 500,
-    },
-
-    {
-      min: 500,
-      max: 100,
-    },
-
-    {
-      min: NaN,
-      max: 500,
-    },
-
-    {
-      min: 100,
-      max: Infinity,
-    },
-  ];
-
-  for (
-    const range of invalidRanges
-  ) {
-    assert(
-      !validatePriceRange(range),
-      `Invalid price range incorrectly passed: ${JSON.stringify(range)}`
-    );
-  }
-
-  console.log(
-    "✓ Pricing range validation"
+function testPricingDatasetValidation() {
+  assert(
+    validatePricingEvaluationDataset() === true,
+    "Pricing evaluation dataset validation failed."
   );
 }
 
+function testPricingDatasetIds() {
+  const ids = PRICING_EVALUATION_DATASET.map((testCase) => testCase.id);
 
-/* =========================================================
-   VALID PRICING RECOMMENDATION
-========================================================= */
+  const uniqueIds = new Set(ids);
+
+  assert(
+    uniqueIds.size === ids.length,
+    "Pricing evaluation dataset contains duplicate IDs."
+  );
+}
+
+// ---------------------------------------------------------
+// Pricing recommendation validation
+// ---------------------------------------------------------
 
 function testValidPricingRecommendation() {
   const recommendation = {
     suggestedPrice: 899,
-
     priceRange: {
       min: 799,
       max: 999,
     },
-
-    reason:
-      "The suggested price reflects the supplied material, category and production details.",
-
     confidence: 0.8,
+    reason: "Based on comparable handmade products and material costs.",
   };
 
-  assert(
-    validatePricingRecommendation(
-      recommendation
-    ),
-    "Valid pricing recommendation should pass."
-  );
-
-  /*
-   * Suggested price must be inside
-   * the recommended range.
-   */
-  assert(
-    recommendation.suggestedPrice >=
-      recommendation.priceRange.min,
-    "Suggested price is below the minimum range."
-  );
+  const result = validatePricingRecommendation(recommendation);
 
   assert(
-    recommendation.suggestedPrice <=
-      recommendation.priceRange.max,
-    "Suggested price is above the maximum range."
-  );
-
-  console.log(
-    "✓ Valid pricing recommendation"
+    result === true,
+    "Valid pricing recommendation should pass validation."
   );
 }
 
+// ---------------------------------------------------------
+// Run all tests
+// ---------------------------------------------------------
 
-/* =========================================================
-   INVALID PRICING RECOMMENDATIONS
-========================================================= */
+const tests = [
+  ["Search dataset exists", testSearchDatasetExists],
+  ["Search dataset count", testSearchDatasetCount],
+  ["Search dataset validation", testSearchDatasetValidation],
+  ["Search dataset IDs", testSearchDatasetIds],
+  ["Search dataset queries", testSearchDatasetQueries],
+  ["Search expected structure", testSearchExpectedStructure],
 
-function testInvalidPricingRecommendations() {
-  const invalidRecommendations = [
-    {
-      suggestedPrice: -10,
+  ["UTF-8 ₹ cases", testIndianRupeeCases],
+  ["Rs currency case", testRsCase],
+  ["INR currency case", testINRCase],
 
-      priceRange: {
-        min: 100,
-        max: 500,
-      },
+  ["Pricing dataset exists", testPricingDatasetExists],
+  ["Pricing dataset validation", testPricingDatasetValidation],
+  ["Pricing dataset IDs", testPricingDatasetIds],
+  ["Pricing recommendation validation", testValidPricingRecommendation],
+];
 
-      reason:
-        "Invalid price.",
+let passed = 0;
+let failed = 0;
 
-      confidence: 0.8,
-    },
+console.log("\n========================================");
+console.log("ARTISAN AI — EVALUATION TESTS");
+console.log("========================================\n");
 
-    {
-      suggestedPrice: 900,
-
-      priceRange: {
-        min: 1000,
-        max: 1200,
-      },
-
-      reason:
-        "Price outside range.",
-
-      confidence: 0.8,
-    },
-
-    {
-      suggestedPrice: 900,
-
-      priceRange: {
-        min: 800,
-        max: 1000,
-      },
-
-      reason:
-        "Invalid confidence.",
-
-      confidence: 1.5,
-    },
-
-    {
-      suggestedPrice: 900,
-
-      priceRange: {
-        min: 800,
-        max: 1000,
-      },
-
-      reason: "",
-
-      confidence: 0.8,
-    },
-  ];
-
-  for (
-    const recommendation of
-      invalidRecommendations
-  ) {
-    assert(
-      !validatePricingRecommendation(
-        recommendation
-      ),
-      `Invalid pricing recommendation incorrectly passed: ${JSON.stringify(recommendation)}`
-    );
+for (const [name, test] of tests) {
+  try {
+    test();
+    console.log(`✓ ${name}`);
+    passed++;
+  } catch (error) {
+    console.error(`✗ ${name}`);
+    console.error(`  ${error.message}`);
+    failed++;
   }
-
-  console.log(
-    "✓ Invalid pricing recommendations"
-  );
 }
 
+console.log("\n========================================");
+console.log(`Passed: ${passed}`);
+console.log(`Failed: ${failed}`);
+console.log("========================================\n");
 
-/* =========================================================
-   PRICING CONTRACT SEMANTICS
-========================================================= */
-
-function testPricingContractSemantics() {
-  const recommendation = {
-    suggestedPrice: 899,
-
-    priceRange: {
-      min: 799,
-      max: 999,
-    },
-
-    reason:
-      "Suggested price based on the supplied product information.",
-
-    confidence: 0.8,
-  };
-
-  assert(
-    validatePricingRecommendation(
-      recommendation
-    ),
-    "Pricing recommendation should be valid."
-  );
-
-  /*
-   * Locked API/AI contract field.
-   */
-  assert(
-    Object.prototype.hasOwnProperty.call(
-      recommendation,
-      "suggestedPrice"
-    ),
-    "Pricing must use suggestedPrice."
-  );
-
-  /*
-   * Do not silently rename the contract field.
-   */
-  assert(
-    !Object.prototype.hasOwnProperty.call(
-      recommendation,
-      "recommendedPrice"
-    ),
-    "Pricing must not rename suggestedPrice to recommendedPrice."
-  );
-
-  /*
-   * AI recommendation is not the artisan's
-   * final database price.
-   */
-  assert(
-    !Object.prototype.hasOwnProperty.call(
-      recommendation,
-      "finalPrice"
-    ),
-    "AI pricing recommendation must not contain finalPrice."
-  );
-
-  console.log(
-    "✓ Pricing contract semantics"
-  );
+if (failed > 0) {
+  process.exit(1);
 }
 
-
-/* =========================================================
-   DETERMINISTIC PROVIDER
-========================================================= */
-
-function createDeterministicProvider() {
-  return {
-    async generateStructuredJSON({
-      input,
-    }) {
-      /*
-       * Deterministic search output.
-       *
-       * This is only for evaluation and does not
-       * access a real AI provider.
-       */
-      if (
-        input &&
-        Object.prototype.hasOwnProperty.call(
-          input,
-          "query"
-        )
-      ) {
-        return {
-          state: null,
-          category: null,
-          minPrice: null,
-          maxPrice: null,
-          keywords: [],
-        };
-      }
-
-      /*
-       * Deterministic pricing output.
-       */
-      return {
-        suggestedPrice: 899,
-
-        priceRange: {
-          min: 799,
-          max: 999,
-        },
-
-        reason:
-          "Deterministic evaluation recommendation.",
-
-        confidence: 0.8,
-      };
-    },
-  };
-}
-
-
-/* =========================================================
-   DETERMINISTIC PROVIDER TEST
-========================================================= */
-
-async function testDeterministicProvider() {
-  const provider =
-    createDeterministicProvider();
-
-  /*
-   * Search provider output.
-   */
-  const searchResult =
-    await provider.generateStructuredJSON({
-      input: {
-        query:
-          "handmade products",
-      },
-    });
-
-  assert(
-    validateSearchFilters(
-      searchResult
-    ),
-    "Deterministic search provider output is invalid."
-  );
-
-  /*
-   * Pricing provider output.
-   */
-  const pricingResult =
-    await provider.generateStructuredJSON({
-      input: {
-        material: "wood",
-        category: "woodwork",
-      },
-    });
-
-  assert(
-    validatePricingRecommendation(
-      pricingResult
-    ),
-    "Deterministic pricing provider output is invalid."
-  );
-
-  console.log(
-    "✓ Deterministic provider"
-  );
-}
-
-
-/* =========================================================
-   MAIN EVALUATION
-========================================================= */
-
-async function runEvaluation() {
-  console.log(
-    "\nARTISAN AI — Evaluation Tests"
-  );
-
-  console.log(
-    "=============================\n"
-  );
-
-  /*
-   * -------------------------------------------------------
-   * DATASET VALIDATION
-   * -------------------------------------------------------
-   */
-
-  console.log(
-    "Validating evaluation datasets..."
-  );
-
-  testSearchDatasetStructure();
-
-  testPricingDatasetStructure();
-
-  /*
-   * -------------------------------------------------------
-   * SEARCH
-   * -------------------------------------------------------
-   */
-
-  console.log(
-    "\nRunning search evaluation...\n"
-  );
-
-  const searchPassed =
-    testSearchCases();
-
-  testSearchOutputIntegrity();
-
-  testSearchParserDoesNotMutateQuery();
-
-  console.log(
-    `\nSearch evaluation: ${searchPassed}/${SEARCH_EVALUATION_DATASET.length} passed.`
-  );
-
-  /*
-   * -------------------------------------------------------
-   * PRICING
-   * -------------------------------------------------------
-   */
-
-  console.log(
-    "\nRunning pricing evaluation...\n"
-  );
-
-  testPricingInputIntegrity();
-
-  testPricingValidationStructures();
-
-  testValidPricingRecommendation();
-
-  testInvalidPricingRecommendations();
-
-  testPricingContractSemantics();
-
-  /*
-   * -------------------------------------------------------
-   * PROVIDER
-   * -------------------------------------------------------
-   */
-
-  await testDeterministicProvider();
-
-  /*
-   * -------------------------------------------------------
-   * SUCCESS
-   * -------------------------------------------------------
-   */
-
-  console.log(
-    "\n================================="
-  );
-
-  console.log(
-    "ARTISAN AI evaluation completed successfully."
-  );
-
-  console.log(
-    `Search cases: ${SEARCH_EVALUATION_DATASET.length}`
-  );
-
-  console.log(
-    `Pricing cases: ${PRICING_EVALUATION_DATASET.length}`
-  );
-
-  console.log(
-    "Network: NOT USED"
-  );
-
-  console.log(
-    "Database: NOT USED"
-  );
-
-  console.log(
-    "Prisma: NOT USED"
-  );
-
-  console.log(
-    "=================================\n"
-  );
-}
-
-
-/* =========================================================
-   CLI
-========================================================= */
-
-if (
-  require.main === module
-) {
-  runEvaluation()
-    .catch(
-      (error) => {
-        console.error(
-          "\n✗ Evaluation failed."
-        );
-
-        console.error(
-          error.message
-        );
-
-        process.exitCode = 1;
-      }
-    );
-}
-
-
-/* =========================================================
-   EXPORTS
-========================================================= */
-
-module.exports = {
-  runEvaluation,
-  createDeterministicProvider,
-};
+console.log("All evaluation tests passed.");

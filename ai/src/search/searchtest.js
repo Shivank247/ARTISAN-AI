@@ -19,7 +19,14 @@ const {
   searchProducts,
 } = require("./searchService");
 
-function assert(condition, message) {
+const {
+  validateSearchFilters,
+} = require("./searchValidator");
+
+function assert(
+  condition,
+  message
+) {
   if (!condition) {
     throw new Error(message);
   }
@@ -126,7 +133,19 @@ function testBasicSearchParsing() {
   );
 }
 
-function testIndianRupeeParsing() {
+function testIndianRupeeWithoutComma() {
+  const filters =
+    parseSearchQuery(
+      "handmade gifts under ₹1000"
+    );
+
+  assert(
+    filters.maxPrice === 1000,
+    "₹1000 should parse as 1000."
+  );
+}
+
+function testIndianRupeeWithComma() {
   const filters =
     parseSearchQuery(
       "handmade gifts under ₹1,000"
@@ -138,22 +157,56 @@ function testIndianRupeeParsing() {
   );
 }
 
-function testRsParsing() {
+function testIndianRupeeRange() {
   const filters =
     parseSearchQuery(
-      "pottery under Rs 500"
+      "jewelry between ₹1000 and ₹3000"
     );
 
   assert(
-    filters.maxPrice === 500,
-    "Rs 500 should parse as 500."
+    filters.minPrice === 1000,
+    "₹1000 should parse as minimum 1000."
+  );
+
+  assert(
+    filters.maxPrice === 3000,
+    "₹3000 should parse as maximum 3000."
+  );
+}
+
+function testIndianRupeeCommaRange() {
+  const filters =
+    parseSearchQuery(
+      "jewelry between ₹1,000 and ₹3,000"
+    );
+
+  assert(
+    filters.minPrice === 1000,
+    "₹1,000 should parse as minimum 1000."
+  );
+
+  assert(
+    filters.maxPrice === 3000,
+    "₹3,000 should parse as maximum 3000."
+  );
+}
+
+function testRsParsing() {
+  const filters =
+    parseSearchQuery(
+      "woodwork under Rs 2000"
+    );
+
+  assert(
+    filters.maxPrice === 2000,
+    "Rs 2000 should parse as 2000."
   );
 }
 
 function testINRParsing() {
   const filters =
     parseSearchQuery(
-      "jewelry under INR 1500"
+      "products under INR 1500"
     );
 
   assert(
@@ -187,12 +240,12 @@ function testReversedPriceRange() {
 
   assert(
     filters.minPrice === 500,
-    "Reversed range should normalize minimum to 500."
+    "Reversed range minimum should normalize to 500."
   );
 
   assert(
     filters.maxPrice === 1500,
-    "Reversed range should normalize maximum to 1500."
+    "Reversed range maximum should normalize to 1500."
   );
 }
 
@@ -215,8 +268,35 @@ function testStateParsing() {
     );
 
   assert(
-    filters.state === "West Bengal",
+    filters.state ===
+      "West Bengal",
     "State should be West Bengal."
+  );
+}
+
+function testUttarPradeshParsing() {
+  const filters =
+    parseSearchQuery(
+      "handmade textiles from Uttar Pradesh"
+    );
+
+  assert(
+    filters.state ===
+      "Uttar Pradesh",
+    "State should be Uttar Pradesh."
+  );
+}
+
+function testMadhyaPradeshParsing() {
+  const filters =
+    parseSearchQuery(
+      "painting from Madhya Pradesh"
+    );
+
+  assert(
+    filters.state ===
+      "Madhya Pradesh",
+    "State should be Madhya Pradesh."
   );
 }
 
@@ -227,7 +307,8 @@ function testCategoryParsing() {
     );
 
   assert(
-    filters.category === "pottery",
+    filters.category ===
+      "pottery",
     "Category should be pottery."
   );
 }
@@ -244,7 +325,8 @@ function testCombinedSearch() {
   );
 
   assert(
-    filters.category === "pottery",
+    filters.category ===
+      "pottery",
     "Combined query should detect pottery."
   );
 
@@ -286,7 +368,9 @@ function testEmptyQuery() {
   );
 
   assert(
-    Array.isArray(filters.keywords) &&
+    Array.isArray(
+      filters.keywords
+    ) &&
       filters.keywords.length === 0,
     "Empty query keywords should be empty."
   );
@@ -325,13 +409,18 @@ function testActualCatalogueProductsOnly() {
   const allowedIds =
     new Set(
       catalogue.map(
-        (product) => product.id
+        (product) =>
+          product.id
       )
     );
 
-  for (const product of results) {
+  for (
+    const product of results
+  ) {
     assert(
-      allowedIds.has(product.id),
+      allowedIds.has(
+        product.id
+      ),
       "Search returned a product outside the supplied catalogue."
     );
   }
@@ -339,7 +428,9 @@ function testActualCatalogueProductsOnly() {
 
 function testCatalogueImmutability() {
   const original =
-    JSON.stringify(catalogue);
+    JSON.stringify(
+      catalogue
+    );
 
   const filters =
     parseSearchQuery(
@@ -352,9 +443,149 @@ function testCatalogueImmutability() {
   );
 
   assert(
-    JSON.stringify(catalogue) ===
-      original,
+    JSON.stringify(
+      catalogue
+    ) === original,
     "Search must not mutate the catalogue."
+  );
+}
+
+function testDuplicateKeywordsAreRemoved() {
+  const filters =
+    parseSearchQuery(
+      "handmade handmade traditional traditional gifts"
+    );
+
+  const handmadeCount =
+    filters.keywords.filter(
+      (keyword) =>
+        keyword === "handmade"
+    ).length;
+
+  const traditionalCount =
+    filters.keywords.filter(
+      (keyword) =>
+        keyword === "traditional"
+    ).length;
+
+  assert(
+    handmadeCount === 1,
+    "Duplicate handmade keyword should be removed."
+  );
+
+  assert(
+    traditionalCount === 1,
+    "Duplicate traditional keyword should be removed."
+  );
+}
+
+function testOnlyAllowedFilterFields() {
+  const filters =
+    parseSearchQuery(
+      "handmade gifts from Bihar under ₹1000"
+    );
+
+  const expectedKeys = [
+    "category",
+    "keywords",
+    "maxPrice",
+    "minPrice",
+    "state",
+  ];
+
+  const actualKeys =
+    Object.keys(filters)
+      .sort();
+
+  assert(
+    JSON.stringify(
+      actualKeys
+    ) ===
+      JSON.stringify(
+        expectedKeys
+      ),
+    "Parser must return only agreed search filter fields."
+  );
+}
+
+function testNoProductIds() {
+  const filters =
+    parseSearchQuery(
+      "handmade gifts from Bihar under ₹1000"
+    );
+
+  assert(
+    !Object.prototype.hasOwnProperty.call(
+      filters,
+      "productIds"
+    ),
+    "Parser must never return productIds."
+  );
+}
+
+function testNoProducts() {
+  const filters =
+    parseSearchQuery(
+      "handmade gifts from Bihar under ₹1000"
+    );
+
+  assert(
+    !Object.prototype.hasOwnProperty.call(
+      filters,
+      "products"
+    ),
+    "Parser must never return products."
+  );
+}
+
+function testInvalidCanonicalState() {
+  assert(
+    validateSearchFilters({
+      state: "Atlantis",
+      category: null,
+      minPrice: null,
+      maxPrice: null,
+      keywords: [],
+    }) === false,
+    "Atlantis must not be accepted as a state."
+  );
+}
+
+function testInvalidCanonicalCategory() {
+  assert(
+    validateSearchFilters({
+      state: null,
+      category: "dragon crafts",
+      minPrice: null,
+      maxPrice: null,
+      keywords: [],
+    }) === false,
+    "dragon crafts must not be accepted as a category."
+  );
+}
+
+function testCanonicalCaseNormalization() {
+  const filters =
+    parseSearchQuery(
+      "HANDMADE POTTERY FROM bihar"
+    );
+
+  assert(
+    filters.state === "Bihar",
+    "Bihar should normalize to canonical case."
+  );
+
+  assert(
+    filters.category ===
+      "pottery",
+    "Pottery should normalize to canonical category."
+  );
+
+  assert(
+    filters.keywords.includes(
+      "handmade"
+    ),
+    "handmade should remain a keyword."
   );
 }
 
@@ -365,8 +596,20 @@ function runTests() {
       testBasicSearchParsing,
     ],
     [
-      "Indian rupee parsing",
-      testIndianRupeeParsing,
+      "Indian rupee without comma",
+      testIndianRupeeWithoutComma,
+    ],
+    [
+      "Indian rupee with comma",
+      testIndianRupeeWithComma,
+    ],
+    [
+      "Indian rupee range",
+      testIndianRupeeRange,
+    ],
+    [
+      "Indian rupee comma range",
+      testIndianRupeeCommaRange,
     ],
     [
       "Rs parsing",
@@ -393,6 +636,14 @@ function runTests() {
       testStateParsing,
     ],
     [
+      "Uttar Pradesh parsing",
+      testUttarPradeshParsing,
+    ],
+    [
+      "Madhya Pradesh parsing",
+      testMadhyaPradeshParsing,
+    ],
+    [
       "category parsing",
       testCategoryParsing,
     ],
@@ -409,12 +660,40 @@ function runTests() {
       testNoResults,
     ],
     [
-      "real catalogue products only",
+      "actual catalogue products only",
       testActualCatalogueProductsOnly,
     ],
     [
       "catalogue immutability",
       testCatalogueImmutability,
+    ],
+    [
+      "duplicate keywords",
+      testDuplicateKeywordsAreRemoved,
+    ],
+    [
+      "only allowed filter fields",
+      testOnlyAllowedFilterFields,
+    ],
+    [
+      "no product IDs",
+      testNoProductIds,
+    ],
+    [
+      "no products",
+      testNoProducts,
+    ],
+    [
+      "invalid canonical state",
+      testInvalidCanonicalState,
+    ],
+    [
+      "invalid canonical category",
+      testInvalidCanonicalCategory,
+    ],
+    [
+      "canonical case normalization",
+      testCanonicalCaseNormalization,
     ],
   ];
 
@@ -423,18 +702,31 @@ function runTests() {
   console.log(
     "\nARTISAN AI — Search Tests"
   );
+
   console.log(
     "=========================\n"
   );
 
-  for (const [name, test] of tests) {
+  for (
+    const [name, test] of tests
+  ) {
     try {
       test();
+
       passed += 1;
-      console.log(`✓ ${name}`);
+
+      console.log(
+        `✓ ${name}`
+      );
     } catch (error) {
-      console.error(`✗ ${name}`);
-      console.error(`  ${error.message}`);
+      console.error(
+        `✗ ${name}`
+      );
+
+      console.error(
+        `  ${error.message}`
+      );
+
       throw error;
     }
   }

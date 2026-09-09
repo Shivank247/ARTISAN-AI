@@ -1,88 +1,56 @@
 /**
  * ARTISAN AI
- * Shared AI Provider Factory
+ * Shared AI Provider
  *
- * Shared layer:
- * ai/src/providers/
- *
- * Primary coordinator:
- * Suraj
- *
- * Used by:
- * - Core AI
- * - Voice/translation
- * - Search
- * - Pricing
+ * This is the single provider abstraction used by
+ * Search, Pricing, Recommendation and other AI modules.
  *
  * IMPORTANT:
- * - Do not create another provider architecture.
- * - Provider credentials remain server-side.
- * - AI providers never access PostgreSQL directly.
+ * - Provider/API keys stay server-side.
+ * - Feature services must not initialize Gemini directly.
+ * - Feature services should receive a provider instance
+ *   and call generateStructuredJSON().
  */
 
-const {
-  generateGeminiStructuredJSON,
-} = require("./geminiProvider");
+class AIProvider {
+  constructor() {
+    this.providerName = "AIProvider";
+  }
 
-function getProviderName() {
-  return (
-    process.env.AI_PROVIDER ||
-    "gemini"
-  ).trim().toLowerCase();
-}
+  /**
+   * Generate structured JSON from the configured AI provider.
+   *
+   * Subclasses / concrete providers must implement this method.
+   *
+   * @param {Object} params
+   * @param {string} params.systemPrompt
+   * @param {string} params.userPrompt
+   * @param {Object} params.input
+   * @returns {Promise<Object>}
+   */
+  async generateStructuredJSON({
+    systemPrompt,
+    userPrompt,
+    input,
+  }) {
+    void systemPrompt;
+    void userPrompt;
+    void input;
 
-function createMockProvider() {
-  return {
-    async generateStructuredJSON() {
-      const error = new Error(
-        "Mock AI provider is not implemented for production AI generation."
-      );
+    throw new Error(
+      "AIProvider.generateStructuredJSON() must be implemented by the shared provider."
+    );
+  }
 
-      error.code = "AI_MOCK_NOT_IMPLEMENTED";
-
-      throw error;
-    },
-  };
-}
-
-function createGeminiProvider() {
-  return {
-    async generateStructuredJSON(options) {
-      return generateGeminiStructuredJSON(options);
-    },
-  };
-}
-
-function createAIProvider(providerName = getProviderName()) {
-  const name = String(providerName)
-    .trim()
-    .toLowerCase();
-
-  switch (name) {
-    case "gemini":
-      return createGeminiProvider();
-
-    case "mock":
-      return createMockProvider();
-
-    default: {
-      const error = new Error(
-        `Unsupported AI provider: ${name}`
-      );
-
-      error.code = "UNSUPPORTED_AI_PROVIDER";
-
-      throw error;
-    }
+  /**
+   * Return provider health/status information.
+   */
+  getStatus() {
+    return {
+      provider: this.providerName,
+      available: true,
+    };
   }
 }
 
-const aiProvider = createAIProvider();
-
-module.exports = {
-  createAIProvider,
-  createGeminiProvider,
-  createMockProvider,
-  getProviderName,
-  aiProvider,
-};
+module.exports = AIProvider;

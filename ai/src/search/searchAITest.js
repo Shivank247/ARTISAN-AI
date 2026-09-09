@@ -20,13 +20,18 @@ const {
   validateSearchFilters,
 } = require("./searchValidator");
 
-function assert(condition, message) {
+function assert(
+  condition,
+  message
+) {
   if (!condition) {
     throw new Error(message);
   }
 }
 
-function createMockProvider(output) {
+function createMockProvider(
+  output
+) {
   return {
     async generateStructuredJSON() {
       return output;
@@ -51,26 +56,29 @@ async function testValidAIOutput() {
   const result =
     await parseSearchQueryWithAI(
       provider,
-      "traditional handmade gifts from Bihar under 1000"
+      "traditional handmade gifts from Bihar under ₹1000"
     );
 
   assert(
     result.success === true,
-    "Valid AI search output should succeed."
+    "Valid AI output should succeed."
   );
 
   assert(
-    result.filters.state === "Bihar",
+    result.filters.state ===
+      "Bihar",
     "State should be Bihar."
   );
 
   assert(
-    result.filters.maxPrice === 1000,
+    result.filters.maxPrice ===
+      1000,
     "Maximum price should be 1000."
   );
 
   assert(
-    result.filters.keywords.length === 3,
+    result.filters.keywords.length ===
+      3,
     "Expected three keywords."
   );
 }
@@ -82,18 +90,17 @@ async function testMissingRequiredField() {
       category: null,
       minPrice: null,
       maxPrice: 1000,
-      // keywords intentionally missing
     });
 
   const result =
     await parseSearchQueryWithAI(
       provider,
-      "handmade gifts from Bihar under 1000"
+      "handmade gifts from Bihar under ₹1000"
     );
 
   assert(
     result.success === false,
-    "Missing keywords must fail validation."
+    "Missing keywords must fail."
   );
 
   assert(
@@ -143,7 +150,7 @@ async function testInvalidMaxPrice() {
 
   assert(
     result.success === false,
-    "Non-finite maxPrice must fail."
+    "NaN maxPrice must fail."
   );
 }
 
@@ -165,7 +172,7 @@ async function testInfiniteMinPrice() {
 
   assert(
     result.success === false,
-    "Infinite minPrice must fail."
+    "Infinity minPrice must fail."
   );
 }
 
@@ -219,7 +226,7 @@ async function testDuplicateKeywords() {
   );
 }
 
-async function testReversedPriceRange() {
+async function testReversedPriceRangeIsNormalized() {
   const provider =
     createMockProvider({
       state: null,
@@ -232,12 +239,24 @@ async function testReversedPriceRange() {
   const result =
     await parseSearchQueryWithAI(
       provider,
-      "jewelry between 1500 and 500"
+      "jewelry between ₹1500 and ₹500"
     );
 
   assert(
-    result.success === false,
-    "AI output with reversed price range must fail strict validation."
+    result.success === true,
+    "Reversed price range should be normalized and accepted."
+  );
+
+  assert(
+    result.filters.minPrice ===
+      500,
+    "Normalized minPrice should be 500."
+  );
+
+  assert(
+    result.filters.maxPrice ===
+      1500,
+    "Normalized maxPrice should be 1500."
   );
 }
 
@@ -254,7 +273,7 @@ async function testInvalidStateType() {
   const result =
     await parseSearchQueryWithAI(
       provider,
-      "products under 1000"
+      "products under ₹1000"
     );
 
   assert(
@@ -285,12 +304,151 @@ async function testInvalidCategoryType() {
   );
 }
 
+async function testInvalidStateValue() {
+  const provider =
+    createMockProvider({
+      state: "Atlantis",
+      category: null,
+      minPrice: null,
+      maxPrice: null,
+      keywords: [],
+    });
+
+  const result =
+    await parseSearchQueryWithAI(
+      provider,
+      "products"
+    );
+
+  assert(
+    result.success === false,
+    "Unknown state must fail."
+  );
+}
+
+async function testInvalidCategoryValue() {
+  const provider =
+    createMockProvider({
+      state: null,
+      category: "dragon crafts",
+      minPrice: null,
+      maxPrice: null,
+      keywords: [],
+    });
+
+  const result =
+    await parseSearchQueryWithAI(
+      provider,
+      "products"
+    );
+
+  assert(
+    result.success === false,
+    "Unknown category must fail."
+  );
+}
+
+async function testCaseInsensitiveCanonicalization() {
+  const provider =
+    createMockProvider({
+      state: "bihar",
+      category: "JEWELRY",
+      minPrice: null,
+      maxPrice: null,
+      keywords: [
+        "Handmade",
+      ],
+    });
+
+  const result =
+    await parseSearchQueryWithAI(
+      provider,
+      "handmade jewelry from Bihar"
+    );
+
+  assert(
+    result.success === true,
+    "Canonical values should be normalized."
+  );
+
+  assert(
+    result.filters.state ===
+      "Bihar",
+    "State should be normalized to Bihar."
+  );
+
+  assert(
+    result.filters.category ===
+      "jewelry",
+    "Category should be normalized to jewelry."
+  );
+
+  assert(
+    result.filters.keywords[0] ===
+      "handmade",
+    "Keywords should be normalized to lowercase."
+  );
+}
+
+async function testUnexpectedProductIdsAreRejected() {
+  const provider =
+    createMockProvider({
+      state: "Bihar",
+      category: null,
+      minPrice: null,
+      maxPrice: 1000,
+      keywords: [],
+      productIds: [
+        "fake-product-id",
+      ],
+    });
+
+  const result =
+    await parseSearchQueryWithAI(
+      provider,
+      "products from Bihar under ₹1000"
+    );
+
+  assert(
+    result.success === false,
+    "AI output containing productIds must be rejected."
+  );
+}
+
+async function testUnexpectedProductsAreRejected() {
+  const provider =
+    createMockProvider({
+      state: "Bihar",
+      category: null,
+      minPrice: null,
+      maxPrice: 1000,
+      keywords: [],
+      products: [
+        {
+          id: "fake-product",
+        },
+      ],
+    });
+
+  const result =
+    await parseSearchQueryWithAI(
+      provider,
+      "products from Bihar under ₹1000"
+    );
+
+  assert(
+    result.success === false,
+    "AI output containing products must be rejected."
+  );
+}
+
 async function testProviderFailure() {
   const provider = {
     async generateStructuredJSON() {
-      const error = new Error(
-        "Provider unavailable."
-      );
+      const error =
+        new Error(
+          "Provider unavailable."
+        );
 
       error.code =
         "PROVIDER_UNAVAILABLE";
@@ -369,49 +527,6 @@ async function testEmptyQuery() {
   );
 }
 
-async function testAIOnlyReturnsFilters() {
-  const provider =
-    createMockProvider({
-      state: "Bihar",
-      category: null,
-      minPrice: null,
-      maxPrice: 1000,
-      keywords: [
-        "traditional",
-        "handmade",
-        "gifts",
-      ],
-      productIds: [
-        "fake-product-id",
-      ],
-    });
-
-  const result =
-    await aiSearch(
-      provider,
-      "traditional handmade gifts from Bihar under 1000"
-    );
-
-  assert(
-    result.success === true,
-    "Valid filters should succeed."
-  );
-
-  assert(
-    result.interpretedFilters !==
-      undefined,
-    "AI search must return interpreted filters."
-  );
-
-  assert(
-    !Object.prototype.hasOwnProperty.call(
-      result.interpretedFilters,
-      "productIds"
-    ),
-    "AI search service must not return product IDs."
-  );
-}
-
 async function testStructuredFilterValidation() {
   assert(
     validateSearchFilters({
@@ -459,8 +574,8 @@ async function runTests() {
       testDuplicateKeywords,
     ],
     [
-      "reversed price range",
-      testReversedPriceRange,
+      "reversed price range normalized",
+      testReversedPriceRangeIsNormalized,
     ],
     [
       "invalid state type",
@@ -469,6 +584,26 @@ async function runTests() {
     [
       "invalid category type",
       testInvalidCategoryType,
+    ],
+    [
+      "invalid state value",
+      testInvalidStateValue,
+    ],
+    [
+      "invalid category value",
+      testInvalidCategoryValue,
+    ],
+    [
+      "canonicalization",
+      testCaseInsensitiveCanonicalization,
+    ],
+    [
+      "unexpected productIds rejected",
+      testUnexpectedProductIdsAreRejected,
+    ],
+    [
+      "unexpected products rejected",
+      testUnexpectedProductsAreRejected,
     ],
     [
       "provider failure",
@@ -483,10 +618,6 @@ async function runTests() {
       testEmptyQuery,
     ],
     [
-      "AI only returns filters",
-      testAIOnlyReturnsFilters,
-    ],
-    [
       "structured filter validation",
       testStructuredFilterValidation,
     ],
@@ -497,20 +628,30 @@ async function runTests() {
   console.log(
     "\nARTISAN AI — AI Search Tests"
   );
+
   console.log(
     "============================\n"
   );
 
-  for (const [name, test] of tests) {
+  for (
+    const [name, test] of tests
+  ) {
     try {
       await test();
 
       passed += 1;
 
-      console.log(`✓ ${name}`);
+      console.log(
+        `✓ ${name}`
+      );
     } catch (error) {
-      console.error(`✗ ${name}`);
-      console.error(`  ${error.message}`);
+      console.error(
+        `✗ ${name}`
+      );
+
+      console.error(
+        `  ${error.message}`
+      );
 
       throw error;
     }
