@@ -102,17 +102,17 @@ function testSearchExpectedStructure() {
 
 function testIndianRupeeCases() {
   const rupeeCases = SEARCH_EVALUATION_DATASET.filter((testCase) =>
-    testCase.query.includes("₹")
+    testCase.query.includes("\u20B9")
   );
 
   assert(
     rupeeCases.length >= 4,
-    `Expected at least 4 ₹ test cases, found ${rupeeCases.length}.`
+    `Expected at least 4 \u20B9 test cases, found ${rupeeCases.length}.`
   );
 
   for (const testCase of rupeeCases) {
     assert(
-      !testCase.query.includes("Γ"),
+      !testCase.query.includes("\u0393\u00E9\u2563"),
       `${testCase.id} contains corrupted UTF-8 characters.`
     );
   }
@@ -218,7 +218,7 @@ const tests = [
   ["Search dataset queries", testSearchDatasetQueries],
   ["Search expected structure", testSearchExpectedStructure],
 
-  ["UTF-8 ₹ cases", testIndianRupeeCases],
+  ["UTF-8 \u20B9 cases", testIndianRupeeCases],
   ["Rs currency case", testRsCase],
   ["INR currency case", testINRCase],
 
@@ -232,16 +232,16 @@ let passed = 0;
 let failed = 0;
 
 console.log("\n========================================");
-console.log("ARTISAN AI — EVALUATION TESTS");
+console.log("ARTISAN AI \u2014 EVALUATION TESTS");
 console.log("========================================\n");
 
 for (const [name, test] of tests) {
   try {
     test();
-    console.log(`✓ ${name}`);
+    console.log(`\u2713 ${name}`);
     passed++;
   } catch (error) {
-    console.error(`✗ ${name}`);
+    console.error(`\u2717 ${name}`);
     console.error(`  ${error.message}`);
     failed++;
   }

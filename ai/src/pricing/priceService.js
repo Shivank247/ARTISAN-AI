@@ -80,12 +80,10 @@ async function generatePriceRecommendation(input, provider) {
   /**
    * Validate pricing input.
    */
-  try {
-    validatePricingInput(input);
-  } catch (error) {
+  if (!validatePricingInput(input)) {
     return createPricingError(
-      "INVALID_INPUT",
-      error.message
+      "INVALID_PRICING_INPUT",
+      "Invalid pricing input."
     );
   }
 
@@ -113,7 +111,9 @@ async function generatePriceRecommendation(input, provider) {
       });
   } catch (error) {
     return createPricingError(
-      "PROVIDER_ERROR",
+      error && error.code
+        ? error.code
+        : "PROVIDER_ERROR",
       "AI price recommendation is temporarily unavailable. Please enter or review the price manually."
     );
   }
@@ -122,9 +122,7 @@ async function generatePriceRecommendation(input, provider) {
    * Validate the AI-generated recommendation before
    * returning it to the backend.
    */
-  try {
-    validatePricingRecommendation(rawRecommendation);
-  } catch (error) {
+  if (!validatePricingRecommendation(rawRecommendation)) {
     return createPricingError(
       "INVALID_AI_RESPONSE",
       "AI price recommendation is temporarily unavailable. Please enter or review the price manually."
@@ -144,9 +142,10 @@ async function generatePriceRecommendation(input, provider) {
         min: rawRecommendation.priceRange.min,
         max: rawRecommendation.priceRange.max,
       },
-      reason: rawRecommendation.reason,
+      reason: rawRecommendation.reason.trim(),
       confidence: rawRecommendation.confidence,
     },
+    isRecommendation: true,
     artisanDecidesFinalPrice: true,
   };
 }

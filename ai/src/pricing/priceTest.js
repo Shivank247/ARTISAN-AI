@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ARTISAN AI
  * Pricing Tests
  *
@@ -13,7 +13,7 @@
  */
 
 const {
-  getPriceRecommendation,
+  generatePriceRecommendation,
 } = require("./priceService");
 
 const {
@@ -57,6 +57,8 @@ function createMockProvider(recommendation) {
 }
 
 async function testValidRecommendation() {
+  const input = validInput;
+
   const provider = createMockProvider({
     suggestedPrice: 899,
     priceRange: {
@@ -67,9 +69,9 @@ async function testValidRecommendation() {
     confidence: 0.8,
   });
 
-  const result = await getPriceRecommendation(
-    provider,
-    validInput
+  const result = await generatePriceRecommendation(
+    input,
+    provider
   );
 
   assert(
@@ -146,9 +148,9 @@ async function testMissingMaterialIsNotInvented() {
     },
   };
 
-  const result = await getPriceRecommendation(
-    provider,
-    input
+  const result = await generatePriceRecommendation(
+    input,
+    provider
   );
 
   assert(
@@ -268,9 +270,9 @@ async function testProviderFailure() {
     },
   };
 
-  const result = await getPriceRecommendation(
-    provider,
-    validInput
+  const result = await generatePriceRecommendation(
+    validInput,
+    provider
   );
 
   assert(
@@ -295,9 +297,9 @@ async function testProviderFailure() {
 }
 
 async function testInvalidProvider() {
-  const result = await getPriceRecommendation(
-    {},
-    validInput
+  const result = await generatePriceRecommendation(
+    validInput,
+    {}
   );
 
   assert(
@@ -317,7 +319,8 @@ async function testInvalidInput() {
     category: 123,
   };
 
-  const result = await getPriceRecommendation(
+  const result = await generatePriceRecommendation(
+    invalidInput,
     createMockProvider({
       suggestedPrice: 899,
       priceRange: {
@@ -326,8 +329,7 @@ async function testInvalidInput() {
       },
       reason: "Should not be used.",
       confidence: 0.8,
-    }),
-    invalidInput
+    })
   );
 
   assert(
@@ -353,9 +355,9 @@ async function testNoFinalPrice() {
     finalPrice: 950,
   });
 
-  const result = await getPriceRecommendation(
-    provider,
-    validInput
+  const result = await generatePriceRecommendation(
+    validInput,
+    provider
   );
 
   assert(
@@ -378,7 +380,10 @@ async function testInputImmutability() {
     confidence: 0.8,
   });
 
-  await getPriceRecommendation(provider, input);
+  await generatePriceRecommendation(
+    input,
+    provider
+  );
 
   assert(
     JSON.stringify(input) === JSON.stringify(original),
@@ -397,9 +402,9 @@ async function testOutputNormalization() {
     confidence: 0.8,
   });
 
-  const result = await getPriceRecommendation(
-    provider,
-    validInput
+  const result = await generatePriceRecommendation(
+    validInput,
+    provider
   );
 
   assert(
@@ -472,16 +477,16 @@ async function runTests() {
 
   let passed = 0;
 
-  console.log("\nARTISAN AI — Pricing Tests");
+  console.log("\nARTISAN AI \u2014 Pricing Tests");
   console.log("==========================\n");
 
   for (const [name, test] of tests) {
     try {
       await test();
       passed += 1;
-      console.log(`✓ ${name}`);
+      console.log(`âœ“ ${name}`);
     } catch (error) {
-      console.error(`✗ ${name}`);
+      console.error(`âœ— ${name}`);
       console.error(`  ${error.message}`);
       throw error;
     }

@@ -85,7 +85,17 @@ function buildPriceUserPrompt(input) {
   );
 }
 
+function buildPricingSystemPrompt() {
+  return PRICE_SYSTEM_PROMPT;
+}
+
+function buildPricingUserPrompt(input) {
+  return buildPriceUserPrompt(input);
+}
+
 module.exports = {
   PRICE_SYSTEM_PROMPT,
   buildPriceUserPrompt,
+  buildPricingSystemPrompt,
+  buildPricingUserPrompt,
 };
