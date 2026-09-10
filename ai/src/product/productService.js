@@ -11,19 +11,43 @@ function getProvider() {
   return new MockProvider();
 }
 
+function normalizeInput(input = {}) {
+  const artisanAnswers = input.artisanAnswers && typeof input.artisanAnswers === "object"
+    ? input.artisanAnswers
+    : {};
+
+  return {
+    image: input.image || null,
+    transcript: typeof input.transcript === "string" ? input.transcript.trim() : "",
+    language: typeof input.language === "string" ? input.language.toLowerCase() : "en",
+    artisanAnswers
+  };
+}
+
 async function generateProduct(input) {
   const provider = getProvider();
+  const normalizedInput = normalizeInput(input);
 
   let rawOutput;
-    try {
-    rawOutput = await provider.generateProduct(input);
+  try {
+    rawOutput = await provider.generateProduct(normalizedInput);
   } catch (err) {
     console.error("AI PROVIDER ERROR:", err);
-    return {   
+    return {
       success: false,
       error: {
         code: "AI_SERVICE_UNAVAILABLE",
         message: "AI service is temporarily unavailable. Please try again."
+      }
+    };
+  }
+
+  if (!rawOutput || typeof rawOutput !== "object") {
+    return {
+      success: false,
+      error: {
+        code: "AI_INVALID_OUTPUT",
+        message: "AI returned an invalid response."
       }
     };
   }
