@@ -27,16 +27,11 @@ async function transcribeAudio(input = {}) {
     return normalized;
   }
 
-  const transcript = typeof input.transcript === "string" && input.transcript.trim()
-    ? input.transcript.trim()
-    : `Transcribed audio in ${normalized.data.language}`;
-
   return {
-    success: true,
-    data: {
-      transcript,
-      language: normalized.data.language,
-      source: "speech-to-text"
+    success: false,
+    error: {
+      code: "STT_UNAVAILABLE",
+      message: "Speech transcription is not configured."
     }
   };
 }

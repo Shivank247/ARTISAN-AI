@@ -31,11 +31,10 @@ async function translateText({ text, sourceLanguage, targetLanguage }) {
   }
 
   return {
-    success: true,
-    data: {
-      translatedText: `[translated:${source}->${target}] ${text.trim()}`,
-      sourceLanguage: source,
-      targetLanguage: target
+    success: false,
+    error: {
+      code: "TRANSLATION_UNAVAILABLE",
+      message: "Translation is not configured for this language pair."
     }
   };
 }

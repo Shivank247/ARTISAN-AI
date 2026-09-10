@@ -13,6 +13,19 @@ async function recommendPrice({ category, material, productionTimeDays, location
     };
   }
 
+  if (productionTimeDays !== undefined && productionTimeDays !== null) {
+    const normalizedDays = Number(productionTimeDays);
+    if (!Number.isFinite(normalizedDays) || normalizedDays < 0) {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_PRODUCTION_TIME',
+          message: 'Production time must be a nonnegative number.'
+        }
+      };
+    }
+  }
+
   const base = 250;
   const categoryBoost = {
     paintings: 180,

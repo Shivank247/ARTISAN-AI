@@ -6,12 +6,19 @@ const QUESTION_MAP = {
   category: "What category best describes this product?"
 };
 
+const QUESTION_MAP_HI = {
+  material: "इसे बनाने के लिए आपने किस सामग्री का उपयोग किया?",
+  suggestedPrice: "आप इस उत्पाद की क्या कीमत रखना चाहते हैं?",
+  category: "यह उत्पाद किस श्रेणी में आता है?"
+};
+
 // Fields that are optional/derived and should NOT trigger a question
 // even if null (keeps the flow from over-asking).
 const SKIP_IF_NULL = ["priceRange"];
 
-function generateQuestions(productData) {
+function generateQuestions(productData, language = "en") {
   const questions = [];
+  const questionMap = language.toLowerCase().startsWith("hi") ? QUESTION_MAP_HI : QUESTION_MAP;
 
   for (const field of Object.keys(QUESTION_MAP)) {
     if (SKIP_IF_NULL.includes(field)) continue;
@@ -25,7 +32,7 @@ function generateQuestions(productData) {
     if (isMissing) {
       questions.push({
         field,
-        question: QUESTION_MAP[field]
+        question: questionMap[field]
       });
     }
   }

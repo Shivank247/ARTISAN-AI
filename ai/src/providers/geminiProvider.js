@@ -4,8 +4,9 @@ const AIProvider = require("./aiProvider");
 class GeminiProvider extends AIProvider {
   constructor(apiKey) {
     super();
+    if (!apiKey) throw Object.assign(new Error("AI_API_KEY must be configured."), { code: "AI_CONFIGURATION_ERROR" });
     this.client = new GoogleGenerativeAI(apiKey);
-    this.model = this.client.getGenerativeModel({ model: "gemini-3.6-flash" });
+    this.model = this.client.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.5-flash" });
   }
 
   async generateProduct({ image, transcript, language, artisanAnswers }) {

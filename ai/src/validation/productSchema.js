@@ -1,8 +1,10 @@
 const { z } = require("zod");
 
 const priceRangeSchema = z.object({
-  min: z.number(),
-  max: z.number()
+  min: z.number().finite().nonnegative(),
+  max: z.number().finite().nonnegative()
+}).refine((range) => range.min <= range.max, {
+  message: "Price range minimum cannot exceed maximum."
 }).nullable();
 
 const productSchema = z.object({
@@ -11,7 +13,7 @@ const productSchema = z.object({
   category: z.string().nullable(),
   material: z.string().nullable(),
   tags: z.array(z.string()),
-  suggestedPrice: z.number().nullable(),
+  suggestedPrice: z.number().finite().nonnegative().nullable(),
   priceRange: priceRangeSchema,
   confidence: z.number().min(0).max(1)
 });

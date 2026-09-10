@@ -11,6 +11,19 @@ function extractState(query) {
   return found ? found.replace(/\b\w/g, (c) => c.toUpperCase()) : null;
 }
 
+function extractCategory(query) {
+  const categories = {
+    pottery: ['pottery', 'ceramic', 'clay pot'],
+    textiles: ['textile', 'saree', 'silk', 'cotton', 'weaving'],
+    jewelry: ['jewelry', 'jewellery', 'necklace', 'earring'],
+    paintings: ['painting', 'artwork', 'madhubani'],
+    woodwork: ['woodwork', 'wooden', 'wood carving'],
+    handicrafts: ['handicraft', 'craft', 'handmade']
+  };
+  const lowered = query.toLowerCase();
+  return Object.entries(categories).find(([, terms]) => terms.some((term) => lowered.includes(term)))?.[0] || null;
+}
+
 async function parseSearchQuery(query) {
   if (typeof query !== 'string' || !query.trim()) {
     return {
@@ -31,7 +44,7 @@ async function parseSearchQuery(query) {
 
   const state = extractState(cleanQuery);
   const maxPrice = extractPrice(cleanQuery);
-  const category = null;
+  const category = extractCategory(cleanQuery);
 
   const normalizedKeywords = ['traditional', 'handmade', 'gifts'].filter((word) => lowered.includes(word));
   const finalKeywords = normalizedKeywords.length ? normalizedKeywords : keywords.slice(0, 5);
@@ -48,4 +61,4 @@ async function parseSearchQuery(query) {
   };
 }
 
-module.exports = { parseSearchQuery, extractState, extractPrice };
+module.exports = { parseSearchQuery, extractState, extractPrice, extractCategory };
