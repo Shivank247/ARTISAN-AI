@@ -1,0 +1,32 @@
+{
+  "name": "artisan-ai-backend",
+  "version": "1.0.0",
+  "description": "ARTISAN AI backend API",
+  "private": true,
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "db:generate": "prisma generate --config ./prisma.config.ts",
+    "db:format": "prisma format --config ./prisma.config.ts",
+    "db:validate": "prisma validate --config ./prisma.config.ts",
+    "db:migrate": "prisma migrate dev --config ./prisma.config.ts",
+    "db:status": "prisma migrate status --config ./prisma.config.ts",
+    "db:studio": "prisma studio --config ./prisma.config.ts",
+    "db:seed": "node ../database/seed/seed.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "prisma": "^7.10.0"
+  }
+}
