@@ -8,7 +8,10 @@ function getProvider() {
   if (providerName === "gemini") {
     return new GeminiProvider(process.env.AI_API_KEY);
   }
-  return new MockProvider();
+  if (providerName === "mock" && process.env.NODE_ENV !== "production") {
+    return new MockProvider();
+  }
+  throw Object.assign(new Error("AI_PROVIDER must be configured as gemini or mock."), { code: "AI_CONFIGURATION_ERROR" });
 }
 
 function normalizeInput(input = {}) {
@@ -25,14 +28,22 @@ function normalizeInput(input = {}) {
 }
 
 async function generateProduct(input) {
-  const provider = getProvider();
   const normalizedInput = normalizeInput(input);
 
   let rawOutput;
   try {
+    const provider = getProvider();
     rawOutput = await provider.generateProduct(normalizedInput);
   } catch (err) {
-    console.error("AI PROVIDER ERROR:", err);
+    if (err.code === "AI_CONFIGURATION_ERROR") {
+      return {
+        success: false,
+        error: {
+          code: err.code,
+          message: err.message
+        }
+      };
+    }
     return {
       success: false,
       error: {
