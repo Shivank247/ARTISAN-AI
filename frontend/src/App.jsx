@@ -6,6 +6,9 @@ import ProductDetails from "./pages/customer/ProductDetails";
 import Cart from "./pages/customer/Cart";
 import Checkout from "./pages/customer/Checkout";
 
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+
 import Onboarding from "./pages/artisan/Onboarding";
 import Dashboard from "./pages/artisan/Dashboard";
 import UploadProduct from "./pages/artisan/UploadProduct";
@@ -25,27 +28,18 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartItems, setCartItems] = useState([]);
 
-  const languages = [
-    { name: "English", native: "English", icon: "🇬🇧" },
-    { name: "Hindi", native: "हिंदी", icon: "🇮🇳" },
-    { name: "Bengali", native: "বাংলা", icon: "🇮🇳" },
-    { name: "Tamil", native: "தமிழ்", icon: "🇮🇳" },
-    { name: "Telugu", native: "తెలుగు", icon: "🇮🇳" },
-    { name: "Marathi", native: "मराठी", icon: "🇮🇳" },
-  ];
-
-  const handleLanguageContinue = () => {
-    if (selectedLanguage) {
-      setCurrentPage("onboarding");
-    }
-  };
+  // =========================================
+  // ARTISAN
+  // =========================================
 
   const handleOnboardingComplete = (data) => {
     setArtisanData(data);
     setCurrentPage("dashboard");
   };
 
-  // Customer-side functions
+  // =========================================
+  // CUSTOMER
+  // =========================================
 
   const handleProductClick = (product) => {
     setSelectedProduct(product);
@@ -104,7 +98,46 @@ function App() {
     );
   };
 
-  // Artisan onboarding
+  // =========================================
+  // LOGIN
+  // =========================================
+
+  if (currentPage === "login") {
+    return (
+      <Login
+        language={selectedLanguage}
+        onLoginSuccess={() => {
+          setCurrentPage("onboarding");
+        }}
+        onShowRegister={() => {
+          setCurrentPage("register");
+        }}
+      />
+    );
+  }
+
+  // =========================================
+  // REGISTER
+  // =========================================
+
+  if (currentPage === "register") {
+    return (
+      <Register
+        language={selectedLanguage}
+        onRegisterSuccess={() => {
+          setCurrentPage("onboarding");
+        }}
+        onShowLogin={() => {
+          setCurrentPage("login");
+        }}
+      />
+    );
+  }
+
+  // =========================================
+  // ARTISAN ONBOARDING
+  // =========================================
+
   if (currentPage === "onboarding") {
     return (
       <Onboarding
@@ -114,7 +147,10 @@ function App() {
     );
   }
 
-  // Upload product
+  // =========================================
+  // UPLOAD PRODUCT
+  // =========================================
+
   if (currentPage === "upload") {
     return (
       <UploadProduct
@@ -127,7 +163,10 @@ function App() {
     );
   }
 
-  // AI catalogue
+  // =========================================
+  // AI CATALOGUE
+  // =========================================
+
   if (currentPage === "catalogue") {
     return (
       <AICatalogue
@@ -145,7 +184,10 @@ function App() {
     );
   }
 
-  // Review product
+  // =========================================
+  // REVIEW PRODUCT
+  // =========================================
+
   if (currentPage === "review") {
     return (
       <ReviewProduct
@@ -159,7 +201,10 @@ function App() {
     );
   }
 
-  // Price recommendation
+  // =========================================
+  // PRICE RECOMMENDATION
+  // =========================================
+
   if (currentPage === "price") {
     return (
       <PriceRecommendation
@@ -169,7 +214,10 @@ function App() {
     );
   }
 
-  // Artisan dashboard
+  // =========================================
+  // ARTISAN DASHBOARD
+  // =========================================
+
   if (currentPage === "dashboard") {
     return (
       <Dashboard
@@ -180,7 +228,10 @@ function App() {
     );
   }
 
-  // Customer marketplace
+  // =========================================
+  // CUSTOMER MARKETPLACE
+  // =========================================
+
   if (currentPage === "customer") {
     return (
       <CustomerHome
@@ -189,7 +240,10 @@ function App() {
     );
   }
 
-  // Product details
+  // =========================================
+  // PRODUCT DETAILS
+  // =========================================
+
   if (currentPage === "product-details") {
     return (
       <ProductDetails
@@ -200,7 +254,10 @@ function App() {
     );
   }
 
-  // Cart
+  // =========================================
+  // CART
+  // =========================================
+
   if (currentPage === "cart") {
     return (
       <Cart
@@ -213,7 +270,10 @@ function App() {
     );
   }
 
-  // Checkout
+  // =========================================
+  // CHECKOUT
+  // =========================================
+
   if (currentPage === "checkout") {
     return (
       <Checkout
@@ -223,7 +283,43 @@ function App() {
     );
   }
 
-  // Language selection
+  // =========================================
+  // LANGUAGE SELECTION
+  // =========================================
+
+  const languages = [
+    {
+      name: "English",
+      native: "English",
+      icon: "🇬🇧",
+    },
+    {
+      name: "Hindi",
+      native: "हिंदी",
+      icon: "🇮🇳",
+    },
+    {
+      name: "Bengali",
+      native: "বাংলা",
+      icon: "🇮🇳",
+    },
+    {
+      name: "Tamil",
+      native: "தமிழ்",
+      icon: "🇮🇳",
+    },
+    {
+      name: "Telugu",
+      native: "తెలుగు",
+      icon: "🇮🇳",
+    },
+    {
+      name: "Marathi",
+      native: "मराठी",
+      icon: "🇮🇳",
+    },
+  ];
+
   return (
     <div className="app">
       <div className="language-card">
@@ -241,14 +337,16 @@ function App() {
           {languages.map((language) => (
             <button
               key={language.name}
+              type="button"
               className={`language-btn ${
                 selectedLanguage === language.name
                   ? "selected"
                   : ""
               }`}
-              onClick={() =>
-                setSelectedLanguage(language.name)
-              }
+              onClick={() => {
+                setSelectedLanguage(language.name);
+                setCurrentPage("login");
+              }}
             >
               <span className="flag">
                 {language.icon}
@@ -261,14 +359,6 @@ function App() {
             </button>
           ))}
         </div>
-
-        <button
-          className="continue-btn"
-          disabled={!selectedLanguage}
-          onClick={handleLanguageContinue}
-        >
-          Continue →
-        </button>
       </div>
     </div>
   );

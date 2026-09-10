@@ -1,4 +1,3 @@
-```jsx
 import { useEffect, useState } from "react";
 import "./UploadProduct.css";
 
@@ -103,4 +102,3 @@ function UploadProduct({ onBack, onContinue }) {
 }
 
 export default UploadProduct;
-```

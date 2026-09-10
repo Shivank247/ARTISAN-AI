@@ -28,7 +28,11 @@ function CustomerHome({ onProductClick }) {
       setLoading(false);
     }
   };
-useEffect(() => {
+
+  useEffect(() => {
+    // Product fetching is intentionally triggered when search/category filters change.
+    // loadProducts manages the loading, error, and product state for this API request.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadProducts(search, selectedCategory);
   }, [search, selectedCategory]);
 
@@ -153,10 +157,7 @@ useEffect(() => {
                   tabIndex={0}
                   onClick={() => onProductClick?.(product)}
                   onKeyDown={(event) => {
-                    if (
-                      event.key === "Enter" ||
-                      event.key === " "
-                    ) {
+                    if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
                       onProductClick?.(product);
                     }
@@ -205,9 +206,7 @@ useEffect(() => {
                 </article>
               ))
             ) : (
-              <p className="no-products">
-                No products found.
-              </p>
+              <p className="no-products">No products found.</p>
             )}
           </div>
         )}

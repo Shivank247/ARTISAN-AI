@@ -82,4 +82,15 @@ function AdminDashboard() {
               <p>Impact data will appear here.</p>
             </div>
 
-            <div className="
+            <div className="impact-card">
+              <h3>Platform Impact</h3>
+              <p>Impact data will appear here.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+export default AdminDashboard;
