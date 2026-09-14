@@ -1,0 +1,341 @@
+/* KARIGAR AI — ARTISAN ONBOARDING */
+
+.onboarding-page {
+
+  min-height: 100vh;
+
+  width: 100%;
+
+  padding: 38px 24px 55px;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: flex-start;
+
+  position: relative;
+
+  overflow: hidden;
+
+  background:
+
+    radial-gradient(circle at 8% 15%, rgba(139, 94, 60, 0.10), transparent 25%),
+
+    radial-gradient(circle at 92% 80%, rgba(154, 109, 69, 0.10), transparent 28%),
+
+    #f6f4ef;
+
+}
+
+.onboarding-page::before,
+
+.onboarding-page::after {
+
+  content: "";
+
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+}
+
+.onboarding-page::before {
+
+  width: 340px;
+
+  height: 340px;
+
+  left: -190px;
+
+  top: 25%;
+
+  background: rgba(139, 94, 60, 0.06);
+
+}
+
+.onboarding-page::after {
+
+  width: 300px;
+
+  height: 300px;
+
+  right: -150px;
+
+  bottom: 8%;
+
+  background: rgba(154, 109, 69, 0.07);
+
+}
+
+.onboarding-card {
+
+  width: min(100%, 1080px);
+
+  background: rgba(255, 255, 255, 0.985);
+
+  padding: 44px 72px 52px;
+
+  border: 1px solid #eadfd4;
+
+  border-radius: 28px;
+
+  box-shadow: 0 24px 70px rgba(70, 50, 30, 0.14);
+
+  position: relative;
+
+  z-index: 1;
+
+}
+
+.onboarding-card::before {
+
+  content: "";
+
+  position: absolute;
+
+  left: 12%;
+
+  right: 12%;
+
+  top: 0;
+
+  height: 4px;
+
+  background: #8b5e3c;
+
+  border-radius: 0 0 8px 8px;
+
+}
+
+.onboarding-logo {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 9px;
+
+  margin-bottom: 34px;
+
+  color: #8b5e3c !important;
+
+  font-size: 30px;
+
+  font-weight: 800;
+
+  letter-spacing: -0.4px;
+
+}
+
+.onboarding-logo span {
+
+  color: #8b5e3c !important;
+
+}
+
+.onboarding-heading {
+
+  text-align: center;
+
+  margin-bottom: 34px;
+
+}
+
+.onboarding-heading h1 {
+
+  color: #241a14 !important;
+
+  font-size: clamp(32px, 4vw, 42px);
+
+  line-height: 1.15;
+
+  font-weight: 800;
+
+  margin-bottom: 12px;
+
+}
+
+.onboarding-heading p {
+
+  max-width: 720px;
+
+  margin: 0 auto;
+
+  color: #51463f !important;
+
+  font-size: 17px;
+
+  line-height: 1.6;
+
+}
+
+.onboarding-card form {
+
+  max-width: 820px;
+
+  margin: 0 auto;
+
+}
+
+.onboarding-card .form-group {
+
+  display: flex;
+
+  flex-direction: column;
+
+  margin-bottom: 21px;
+
+}
+
+.onboarding-card .form-group label {
+
+  color: #241a14 !important;
+
+  font-size: 15px;
+
+  font-weight: 800;
+
+  margin-bottom: 8px;
+
+}
+
+.onboarding-card .form-group input,
+
+.onboarding-card .form-group select,
+
+.onboarding-card .form-group textarea {
+
+  width: 100%;
+
+  min-height: 54px;
+
+  padding: 14px 16px;
+
+  border: 1px solid #d8cec5;
+
+  border-radius: 12px;
+
+  background: #fff !important;
+
+  color: #15110e !important;
+
+  font-size: 16px;
+
+  font-weight: 600;
+
+  outline: none;
+
+  transition: 0.2s ease;
+
+}
+
+.onboarding-card .form-group input::placeholder,
+
+.onboarding-card .form-group textarea::placeholder {
+
+  color: #9b9088 !important;
+
+  opacity: 1;
+
+  font-weight: 500;
+
+}
+
+.onboarding-card .form-group input:focus,
+
+.onboarding-card .form-group select:focus,
+
+.onboarding-card .form-group textarea:focus {
+
+  border-color: #8b5e3c;
+
+  box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.10);
+
+}
+
+.onboarding-card .form-group textarea {
+
+  min-height: 125px;
+
+  resize: vertical;
+
+}
+
+.start-btn {
+
+  width: 100%;
+
+  padding: 16px 20px;
+
+  margin-top: 8px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: #8b5e3c;
+
+  color: #fff;
+
+  font-size: 17px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+
+}
+
+.start-btn:hover {
+
+  background: #754d31;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 10px 24px rgba(139, 94, 60, 0.20);
+
+}
+
+@media (max-width: 700px) {
+
+  .onboarding-page {
+
+    padding: 24px 14px 40px;
+
+  }
+
+  .onboarding-card {
+
+    padding: 36px 22px 32px;
+
+    border-radius: 22px;
+
+  }
+
+  .onboarding-logo {
+
+    font-size: 27px;
+
+    margin-bottom: 28px;
+
+  }
+
+  .onboarding-heading h1 {
+
+    font-size: 30px;
+
+  }
+
+  .onboarding-heading p {
+
+    font-size: 15px;
+
+  }
+
+}

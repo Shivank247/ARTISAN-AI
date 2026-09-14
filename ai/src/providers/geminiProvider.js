@@ -6,7 +6,7 @@ class GeminiProvider extends AIProvider {
     super();
     if (!apiKey) throw Object.assign(new Error("AI_API_KEY must be configured."), { code: "AI_CONFIGURATION_ERROR" });
     this.client = new GoogleGenerativeAI(apiKey);
-    this.model = this.client.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.5-flash" });
+    this.model = this.client.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-3.6-flash" });
   }
 
   async generateProduct({ image, transcript, language, artisanAnswers }) {
