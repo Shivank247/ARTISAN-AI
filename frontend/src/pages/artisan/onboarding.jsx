@@ -2,9 +2,6 @@ import { useState } from "react";
 import "./Onboarding.css";
 import translations from "../../i18n/translations";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
 function Onboarding({ language, onComplete }) {
   const t = translations[language] || translations.English;
 
@@ -15,67 +12,50 @@ function Onboarding({ language, onComplete }) {
     description: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleContinue = () => {
+    // Get the latest values
+    const data = {
+      ...formData,
+      name: formData.name.trim(),
+      craft: formData.craft.trim(),
+      location: formData.location.trim(),
+      description: formData.description.trim(),
+    };
 
-    if (!formData.name || !formData.craft) {
-      alert(t.alert);
+    // Required fields
+    if (!data.name) {
+      alert("Please enter your name.");
       return;
     }
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setError("Authentication required. Please login again.");
+    if (!data.craft) {
+      alert("Please select what you create.");
       return;
     }
 
-    setLoading(true);
-    setError("");
+    console.log("ONBOARDING COMPLETE:", data);
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/artisans/me`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          craftType: formData.craft,
-          city: formData.location,
-          story: formData.description,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result?.error?.message || "Failed to save artisan profile."
-        );
-      }
-
-      onComplete(formData);
-    } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+    // Send data back to App.jsx
+    if (typeof onComplete === "function") {
+      onComplete(data);
+    } else {
+      console.error("onComplete function is missing");
     }
   };
 
   return (
     <div className="onboarding-page">
       <div className="onboarding-card">
+
         <div className="onboarding-logo">
           ✦ <span>Karigar AI</span>
         </div>
@@ -85,75 +65,68 @@ function Onboarding({ language, onComplete }) {
           <p>{t.subtitle}</p>
         </div>
 
-        {error && (
-          <div className="error-message" role="alert">
-            {error}
-          </div>
-        )}
+        <div className="form-group">
+          <label>{t.name}</label>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>{t.name}</label>
-            <input
-              type="text"
-              name="name"
-              placeholder={t.namePlaceholder}
-              value={formData.name}
-              onChange={handleChange}
-              disabled={loading}
-            />
-          </div>
+          <input
+            type="text"
+            name="name"
+            placeholder={t.namePlaceholder}
+            value={formData.name}
+            onChange={handleChange}
+          />
+        </div>
 
-          <div className="form-group">
-            <label>{t.craft}</label>
-            <select
-              name="craft"
-              value={formData.craft}
-              onChange={handleChange}
-              disabled={loading}
-            >
-              <option value="">{t.selectCraft}</option>
-              <option value="Handloom">{t.crafts.Handloom}</option>
-              <option value="Pottery">{t.crafts.Pottery}</option>
-              <option value="Jewellery">{t.crafts.Jewellery}</option>
-              <option value="Woodwork">{t.crafts.Woodwork}</option>
-              <option value="Painting">{t.crafts.Painting}</option>
-              <option value="Other">{t.crafts.Other}</option>
-            </select>
-          </div>
+        <div className="form-group">
+          <label>{t.craft}</label>
 
-          <div className="form-group">
-            <label>{t.location}</label>
-            <input
-              type="text"
-              name="location"
-              placeholder={t.locationPlaceholder}
-              value={formData.location}
-              onChange={handleChange}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>{t.description}</label>
-            <textarea
-              name="description"
-              placeholder={t.descriptionPlaceholder}
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-              disabled={loading}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="start-btn"
-            disabled={loading}
+          <select
+            name="craft"
+            value={formData.craft}
+            onChange={handleChange}
           >
-            {loading ? "Saving..." : t.continue}
-          </button>
-        </form>
+            <option value="">{t.selectCraft}</option>
+            <option value="Handloom">{t.crafts.Handloom}</option>
+            <option value="Pottery">{t.crafts.Pottery}</option>
+            <option value="Jewellery">{t.crafts.Jewellery}</option>
+            <option value="Woodwork">{t.crafts.Woodwork}</option>
+            <option value="Painting">{t.crafts.Painting}</option>
+            <option value="Other">{t.crafts.Other}</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>{t.location}</label>
+
+          <input
+            type="text"
+            name="location"
+            placeholder={t.locationPlaceholder}
+            value={formData.location}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>{t.description}</label>
+
+          <textarea
+            name="description"
+            placeholder={t.descriptionPlaceholder}
+            value={formData.description}
+            onChange={handleChange}
+            rows="4"
+          />
+        </div>
+
+        <button
+          type="button"
+          className="start-btn"
+          onClick={handleContinue}
+        >
+          {t.continue || "Continue →"}
+        </button>
+
       </div>
     </div>
   );
