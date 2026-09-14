@@ -1,3 +1,5 @@
+/* KARIGAR AI — LANGUAGE SELECTION UI */
+
 * {
   margin: 0;
   padding: 0;
@@ -5,79 +7,151 @@
   font-family: Arial, sans-serif;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   background: #f6f4ef;
+  color: #241a14;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 .app {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 30px 20px;
+  padding: 48px 24px;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(154, 109, 69, 0.10), transparent 28%),
+    radial-gradient(circle at 88% 78%, rgba(139, 94, 60, 0.08), transparent 30%),
+    #f6f4ef;
+}
+
+.app::before,
+.app::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.app::before {
+  width: 260px;
+  height: 260px;
+  left: -130px;
+  top: 18%;
+  background: rgba(139, 94, 60, 0.06);
+}
+
+.app::after {
+  width: 320px;
+  height: 320px;
+  right: -160px;
+  bottom: 8%;
+  background: rgba(154, 109, 69, 0.07);
 }
 
 .language-card {
-  width: 100%;
-  max-width: 520px;
-  background: white;
-  padding: 35px;
-  border-radius: 20px;
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+  width: min(100%, 680px);
+  background: rgba(255, 255, 255, 0.97);
+  padding: 52px 56px 56px;
+  border: 1px solid #eadfd4;
+  border-radius: 28px;
+  box-shadow: 0 24px 70px rgba(70, 50, 30, 0.13);
+  position: relative;
+  z-index: 1;
+}
+
+.language-card::before {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 0;
+  height: 4px;
+  background: #8b5e3c;
+  border-radius: 0 0 8px 8px;
 }
 
 .logo {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  color: #8b5e3c;
-  margin-bottom: 30px;
+  color: #8b5e3c !important;
+  margin-bottom: 42px;
 }
 
 .logo span {
-  font-size: 28px;
+  color: #8b5e3c !important;
+  font-size: 31px;
+  font-weight: 800;
 }
 
 .logo h1 {
-  font-size: 28px;
+  color: #8b5e3c !important;
+  font-size: 31px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .welcome-section {
-  margin-bottom: 25px;
+  text-align: center;
+  margin-bottom: 34px;
 }
 
 .welcome-section h2 {
-  font-size: 30px;
-  margin-bottom: 10px;
+  color: #241a14 !important;
+  font-size: 36px;
+  line-height: 1.2;
+  font-weight: 800;
+  margin-bottom: 12px;
 }
 
 .welcome-section p {
-  color: #666;
-  font-size: 15px;
+  color: #5f534b !important;
+  font-size: 17px;
+  line-height: 1.6;
 }
 
 .language-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  gap: 16px;
 }
 
 .language-btn {
+  min-height: 92px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 12px;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px 22px;
+  background: #fff;
+  border: 1px solid #dfd5cb;
+  border-radius: 16px;
   cursor: pointer;
   text-align: left;
-  transition: 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .language-btn:hover {
-  border-color: #8b5e3c;
-  transform: translateY(-2px);
+  border-color: #a8754e;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(70, 50, 30, 0.10);
 }
 
 .language-btn.selected {
@@ -86,7 +160,7 @@ body {
 }
 
 .flag {
-  font-size: 26px;
+  font-size: 28px;
 }
 
 .language-text {
@@ -96,30 +170,34 @@ body {
 }
 
 .language-btn strong {
-  font-size: 16px;
+  color: #241a14 !important;
+  font-size: 17px;
+  font-weight: 800;
 }
 
 .language-btn small {
-  color: #777;
+  color: #75685f !important;
   font-size: 12px;
 }
 
 .continue-btn {
   width: 100%;
-  margin-top: 25px;
-  padding: 15px;
+  margin-top: 28px;
+  padding: 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #8b5e3c;
-  color: white;
+  color: #fff;
   font-size: 17px;
-  font-weight: bold;
+  font-weight: 800;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
 .continue-btn:hover:not(:disabled) {
+  background: #754d31;
   transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(139, 94, 60, 0.20);
 }
 
 .continue-btn:disabled {
@@ -127,16 +205,30 @@ body {
   cursor: not-allowed;
 }
 
-@media (max-width: 500px) {
+@media (max-width: 600px) {
+  .app {
+    padding: 24px 14px;
+  }
+
   .language-card {
-    padding: 25px 20px;
+    padding: 38px 22px;
+    border-radius: 22px;
+  }
+
+  .logo {
+    margin-bottom: 32px;
+  }
+
+  .logo h1,
+  .logo span {
+    font-size: 27px;
+  }
+
+  .welcome-section h2 {
+    font-size: 30px;
   }
 
   .language-grid {
     grid-template-columns: 1fr;
-  }
-
-  .welcome-section h2 {
-    font-size: 26px;
   }
 }

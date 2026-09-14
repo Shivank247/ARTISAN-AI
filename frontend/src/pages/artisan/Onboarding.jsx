@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./Onboarding.css";
 import translations from "../../i18n/translations";
+import apiRequest from "../../services/api";
 
 function Onboarding({ language, onComplete }) {
   const t = translations[language] || translations.English;
@@ -12,6 +13,9 @@ function Onboarding({ language, onComplete }) {
     description: "",
   });
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -19,19 +23,20 @@ function Onboarding({ language, onComplete }) {
       ...current,
       [name]: value,
     }));
+
+    if (error) {
+      setError("");
+    }
   };
 
-  const handleContinue = () => {
-    // Get the latest values
+  const handleContinue = async () => {
     const data = {
-      ...formData,
       name: formData.name.trim(),
       craft: formData.craft.trim(),
       location: formData.location.trim(),
       description: formData.description.trim(),
     };
 
-    // Required fields
     if (!data.name) {
       alert("Please enter your name.");
       return;
@@ -42,20 +47,53 @@ function Onboarding({ language, onComplete }) {
       return;
     }
 
-    console.log("ONBOARDING COMPLETE:", data);
+    setIsSaving(true);
+    setError("");
 
-    // Send data back to App.jsx
-    if (typeof onComplete === "function") {
-      onComplete(data);
-    } else {
-      console.error("onComplete function is missing");
+    try {
+      const locationParts = data.location
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+      const city = locationParts[0] || null;
+      const state = locationParts[1] || null;
+
+      const response = await apiRequest("/artisans/me", {
+        method: "PUT",
+        body: JSON.stringify({
+          craftType: data.craft,
+          city,
+          state,
+          story: data.description || null,
+          latitude: null,
+          longitude: null,
+        }),
+      });
+
+      console.log("ARTISAN PROFILE SAVED:", response.data);
+
+      if (typeof onComplete === "function") {
+        onComplete({
+          ...data,
+          artisanProfile: response.data,
+        });
+      }
+    } catch (err) {
+      console.error("ONBOARDING SAVE ERROR:", err);
+
+      setError(
+        err.message ||
+          "Unable to save your artisan profile. Please try again."
+      );
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
     <div className="onboarding-page">
       <div className="onboarding-card">
-
         <div className="onboarding-logo">
           ✦ <span>Karigar AI</span>
         </div>
@@ -74,6 +112,7 @@ function Onboarding({ language, onComplete }) {
             placeholder={t.namePlaceholder}
             value={formData.name}
             onChange={handleChange}
+            disabled={isSaving}
           />
         </div>
 
@@ -84,6 +123,7 @@ function Onboarding({ language, onComplete }) {
             name="craft"
             value={formData.craft}
             onChange={handleChange}
+            disabled={isSaving}
           >
             <option value="">{t.selectCraft}</option>
             <option value="Handloom">{t.crafts.Handloom}</option>
@@ -104,6 +144,7 @@ function Onboarding({ language, onComplete }) {
             placeholder={t.locationPlaceholder}
             value={formData.location}
             onChange={handleChange}
+            disabled={isSaving}
           />
         </div>
 
@@ -116,17 +157,26 @@ function Onboarding({ language, onComplete }) {
             value={formData.description}
             onChange={handleChange}
             rows="4"
+            disabled={isSaving}
           />
         </div>
+
+        {error && (
+          <div className="onboarding-error" role="alert">
+            {error}
+          </div>
+        )}
 
         <button
           type="button"
           className="start-btn"
           onClick={handleContinue}
+          disabled={isSaving}
         >
-          {t.continue || "Continue →"}
+          {isSaving
+            ? "Saving..."
+            : t.continue || "Continue →"}
         </button>
-
       </div>
     </div>
   );

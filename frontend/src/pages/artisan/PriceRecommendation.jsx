@@ -1,47 +1,184 @@
 import { useState } from "react";
 import "./PriceRecommendation.css";
+import { updateProduct } from "../../services/api";
 
-function PriceRecommendation({ onBack, productData }) {
-  const suggestedPrice = productData?.suggestedPrice;
-  const minPrice = productData?.priceRange?.min;
-  const maxPrice = productData?.priceRange?.max;
+function PriceRecommendation({
+  onBack,
+  productData,
+  onPriceSaved,
+}) {
+  /*
+   * AI/API responses can sometimes contain numeric
+   * values as strings. Normalize them safely.
+   */
+  const toNumber = (value) => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return null;
+    }
 
-  const [finalPrice, setFinalPrice] = useState(
-    typeof suggestedPrice === "number" ? String(suggestedPrice) : ""
+    const number = Number(value);
+
+    return Number.isFinite(number)
+      ? number
+      : null;
+  };
+
+  const suggestedPrice = toNumber(
+    productData?.suggestedPrice
   );
 
-  const [error, setError] = useState("");
+  const minPrice = toNumber(
+    productData?.priceRange?.min
+  );
 
+  const maxPrice = toNumber(
+    productData?.priceRange?.max
+  );
+
+  const productId = productData?.id;
+
+  /*
+   * If AI gives a suggested price but doesn't
+   * provide a range, use the suggested price
+   * as a safe display fallback.
+   *
+   * This does NOT change the database price.
+   */
+  const displayMinPrice =
+    minPrice !== null
+      ? minPrice
+      : suggestedPrice;
+
+  const displayMaxPrice =
+    maxPrice !== null
+      ? maxPrice
+      : suggestedPrice;
+
+  const [finalPrice, setFinalPrice] =
+    useState(
+      suggestedPrice !== null
+        ? String(suggestedPrice)
+        : ""
+    );
+
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] =
+    useState(false);
+  const [success, setSuccess] =
+    useState("");
+
+  /*
+   * Use AI recommended price.
+   */
   const handleUseRecommendation = () => {
-    if (typeof suggestedPrice === "number") {
-      setFinalPrice(String(suggestedPrice));
+    if (suggestedPrice !== null) {
+      setFinalPrice(
+        String(suggestedPrice)
+      );
+
       setError("");
+      setSuccess("");
     }
   };
 
-  const handleContinue = () => {
-    const numericPrice = Number(finalPrice);
+  /*
+   * Save final price and publish the product.
+   */
+  const handleContinue = async () => {
+    const numericPrice = Number(
+      finalPrice
+    );
 
-    if (!finalPrice || Number.isNaN(numericPrice) || numericPrice <= 0) {
-      setError("Please enter a valid final price.");
+    if (
+      !finalPrice ||
+      Number.isNaN(numericPrice) ||
+      !Number.isFinite(numericPrice) ||
+      numericPrice <= 0
+    ) {
+      setError(
+        "Please enter a valid final price."
+      );
+      return;
+    }
+
+    if (!Number.isInteger(numericPrice)) {
+      setError(
+        "Final price must be a whole number."
+      );
+      return;
+    }
+
+    if (!productId) {
+      setError(
+        "Product has not been saved yet. Please go back and try again."
+      );
       return;
     }
 
     setError("");
+    setSuccess("");
+    setIsSaving(true);
 
-    /*
-      The artisan's final price is selected here.
-      It will be sent to the backend during the
-      draft review / approval / publish flow once
-      the agreed backend endpoint is available.
-    */
+    try {
+      /*
+       * Update the REAL product already created
+       * in PostgreSQL.
+       */
+      const response =
+        await updateProduct(
+          productId,
+          {
+            price: numericPrice,
+            status: "PUBLISHED",
+          }
+        );
+
+      /*
+       * api.js returns the backend `data`
+       * object as response.data.
+       */
+      const updatedProduct =
+        response?.data || {};
+
+      setSuccess(
+        "Final price saved and product published successfully! ✓"
+      );
+
+      if (
+        typeof onPriceSaved ===
+        "function"
+      ) {
+        onPriceSaved({
+          ...productData,
+          ...updatedProduct,
+          price: numericPrice,
+          status: "PUBLISHED",
+        });
+      }
+    } catch (err) {
+      console.error(
+        "Price update error:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "Unable to save the final price and publish the product. Please try again."
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  if (
-    typeof suggestedPrice !== "number" ||
-    typeof minPrice !== "number" ||
-    typeof maxPrice !== "number"
-  ) {
+  /*
+   * Only show unavailable state when there
+   * is genuinely no usable AI price.
+   */
+  if (suggestedPrice === null) {
     return (
       <div className="price-page">
         <div className="price-card">
@@ -58,16 +195,23 @@ function PriceRecommendation({ onBack, productData }) {
           </div>
 
           <div className="price-heading">
-            <h1>AI Price Recommendation</h1>
+            <h1>
+              AI Price Recommendation
+            </h1>
 
             <p>
-              Generate the product catalogue first to receive an AI price
+              Generate the product catalogue
+              first to receive an AI price
               recommendation.
             </p>
           </div>
 
-          <div className="price-error" role="alert">
-            Price recommendation data is not available yet.
+          <div
+            className="price-error"
+            role="alert"
+          >
+            Price recommendation data is not
+            available yet.
           </div>
         </div>
       </div>
@@ -81,6 +225,7 @@ function PriceRecommendation({ onBack, productData }) {
           type="button"
           className="back-btn"
           onClick={onBack}
+          disabled={isSaving}
         >
           ← Back
         </button>
@@ -90,36 +235,52 @@ function PriceRecommendation({ onBack, productData }) {
         </div>
 
         <div className="price-heading">
-          <h1>AI Price Recommendation 💰</h1>
+          <h1>
+            AI Price Recommendation 💰
+          </h1>
 
           <p>
-            AI has suggested a price based on your product information. You
+            AI has suggested a price based on
+            your product information. You
             choose the final selling price.
           </p>
         </div>
 
         <div className="price-result">
-          <div className="result-icon">✨</div>
+          <div className="result-icon">
+            ✨
+          </div>
 
-          <h2>AI Recommended Price</h2>
+          <h2>
+            AI Recommended Price
+          </h2>
 
           <div className="recommended-price">
             ₹{suggestedPrice}
           </div>
 
-          <p className="price-range">
-            Suggested range: ₹{minPrice} – ₹{maxPrice}
-          </p>
+          {displayMinPrice !== null &&
+            displayMaxPrice !== null && (
+              <p className="price-range">
+                Suggested range: ₹
+                {displayMinPrice} – ₹
+                {displayMaxPrice}
+              </p>
+            )}
 
           <div className="price-note">
-            This is an AI recommendation, not your final price. You can use
-            it or choose your own price.
+            This is an AI recommendation, not
+            your final price. You can use it or
+            choose your own price.
           </div>
 
           <button
             type="button"
             className="recommend-btn"
-            onClick={handleUseRecommendation}
+            onClick={
+              handleUseRecommendation
+            }
+            disabled={isSaving}
           >
             Use AI Recommendation
           </button>
@@ -133,18 +294,36 @@ function PriceRecommendation({ onBack, productData }) {
               id="final-price"
               type="number"
               min="1"
+              step="1"
               value={finalPrice}
               onChange={(event) => {
-                setFinalPrice(event.target.value);
+                setFinalPrice(
+                  event.target.value
+                );
+
                 setError("");
+                setSuccess("");
               }}
               placeholder="Enter your final selling price"
+              disabled={isSaving}
             />
           </div>
 
           {error && (
-            <p className="price-error" role="alert">
+            <p
+              className="price-error"
+              role="alert"
+            >
               {error}
+            </p>
+          )}
+
+          {success && (
+            <p
+              className="price-success"
+              role="status"
+            >
+              {success}
             </p>
           )}
 
@@ -152,8 +331,11 @@ function PriceRecommendation({ onBack, productData }) {
             type="button"
             className="again-btn"
             onClick={handleContinue}
+            disabled={isSaving}
           >
-            Save Final Price
+            {isSaving
+              ? "Publishing..."
+              : "Save Final Price & Publish"}
           </button>
         </div>
       </div>
