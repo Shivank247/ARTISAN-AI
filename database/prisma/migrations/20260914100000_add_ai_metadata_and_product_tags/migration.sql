@@ -1,0 +1,5 @@
+ALTER TABLE "Product" ADD COLUMN "tags" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+
+ALTER TABLE "AIGeneration" ADD COLUMN "inputLanguage" TEXT;
+
+ALTER TABLE "AIGeneration" ADD COLUMN "model" TEXT;

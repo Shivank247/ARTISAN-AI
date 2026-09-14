@@ -6,6 +6,7 @@
   "type": "module",
   "main": "src/server.js",
   "scripts": {
+    "test": "node --test",
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "db:generate": "prisma generate --config ./prisma.config.ts",

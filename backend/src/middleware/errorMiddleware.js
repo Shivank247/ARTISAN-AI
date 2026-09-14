@@ -1,3 +1,4 @@
+import env from "../config/env.js";
 import { errorResponse } from "../utils/response.js";
 
 export function notFoundMiddleware(req, res) {
@@ -10,7 +11,9 @@ export function notFoundMiddleware(req, res) {
 }
 
 export function errorMiddleware(err, req, res, next) {
-  console.error("Backend error:", err);
+  if (env.nodeEnv !== "test") {
+    console.error("Backend error:", err);
+  }
 
   if (res.headersSent) {
     return next(err);

@@ -80,6 +80,7 @@ model Product {
   description        String
   category           String
   material           String
+  tags               String[]       @default([])
   price              Int
   currency           String        @default("INR")
   imageUrl           String?
@@ -166,8 +167,10 @@ model AIGeneration {
   user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   type         String
+  inputLanguage String?
   inputText    String?
   outputJson   Json?
+  model        String?
   status       String  @default("SUCCESS")
   errorMessage String?
 

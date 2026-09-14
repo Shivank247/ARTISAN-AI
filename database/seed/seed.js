@@ -100,6 +100,54 @@ async function main() {
     },
   });
 
+  const additionalArtisans = [
+    ["Sunita Devi", "Madhubani Painting", "Madhubani", "Bihar"],
+    ["Asha Devi", "Handloom", "Bishnupur", "West Bengal"],
+    ["Meera Kumari", "Silver Jewelry", "Jaipur", "Rajasthan"],
+    ["Kavita Bai", "Gond Art", "Bhopal", "Madhya Pradesh"],
+    ["Lakshmi Amma", "Bamboo Craft", "Kochi", "Kerala"],
+  ];
+
+  for (let index = 0; index < additionalArtisans.length; index += 1) {
+    const [name, craftType, city, state] = additionalArtisans[index];
+    const user = await prisma.user.create({
+      data: {
+        name,
+        phone: `90000000${10 + index}`,
+        passwordHash: artisanPasswordHash,
+        role: "ARTISAN",
+        language: index % 2 === 0 ? "hi" : "en",
+      },
+    });
+    const profile = await prisma.artisan.create({
+      data: {
+        userId: user.id,
+        craftType,
+        city,
+        state,
+        story: `${name} creates traditional ${craftType.toLowerCase()} inspired by local craft heritage.`,
+      },
+    });
+
+    for (let productIndex = 0; productIndex < 4; productIndex += 1) {
+      await prisma.product.create({
+        data: {
+          artisanId: profile.id,
+          title: `${craftType} Creation ${productIndex + 1}`,
+          description: `Handcrafted ${craftType.toLowerCase()} made by ${name}.`,
+          category: craftType,
+          material: productIndex % 2 === 0 ? "Natural materials" : "Traditional handmade materials",
+          price: 650 + index * 140 + productIndex * 175,
+          currency: "INR",
+          city,
+          state,
+          productionTimeDays: 3 + productIndex,
+          status: productIndex === 3 ? "DRAFT" : "PUBLISHED",
+        },
+      });
+    }
+  }
+
   console.log("🛍️ Creating demo products...");
 
   const diya = await prisma.product.create({
@@ -229,8 +277,8 @@ async function main() {
   console.log("     ARTISAN AI SEED SUCCESSFUL");
   console.log("========================================");
   console.log("Users       : 3");
-  console.log("Artisans    : 1");
-  console.log("Products    : 3");
+  console.log("Artisans    : 6");
+  console.log("Products    : 23");
   console.log("Reviews     : 1");
   console.log("Orders      : 1");
   console.log(`Order Items : ${order.items.length}`);

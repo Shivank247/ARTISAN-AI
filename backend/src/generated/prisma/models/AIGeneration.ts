@@ -30,7 +30,9 @@ export type AIGenerationMinAggregateOutputType = {
   productId: string | null
   userId: string | null
   type: string | null
+  inputLanguage: string | null
   inputText: string | null
+  model: string | null
   status: string | null
   errorMessage: string | null
   createdAt: Date | null
@@ -43,7 +45,9 @@ export type AIGenerationMaxAggregateOutputType = {
   productId: string | null
   userId: string | null
   type: string | null
+  inputLanguage: string | null
   inputText: string | null
+  model: string | null
   status: string | null
   errorMessage: string | null
   createdAt: Date | null
@@ -56,8 +60,10 @@ export type AIGenerationCountAggregateOutputType = {
   productId: number
   userId: number
   type: number
+  inputLanguage: number
   inputText: number
   outputJson: number
+  model: number
   status: number
   errorMessage: number
   createdAt: number
@@ -72,7 +78,9 @@ export type AIGenerationMinAggregateInputType = {
   productId?: true
   userId?: true
   type?: true
+  inputLanguage?: true
   inputText?: true
+  model?: true
   status?: true
   errorMessage?: true
   createdAt?: true
@@ -85,7 +93,9 @@ export type AIGenerationMaxAggregateInputType = {
   productId?: true
   userId?: true
   type?: true
+  inputLanguage?: true
   inputText?: true
+  model?: true
   status?: true
   errorMessage?: true
   createdAt?: true
@@ -98,8 +108,10 @@ export type AIGenerationCountAggregateInputType = {
   productId?: true
   userId?: true
   type?: true
+  inputLanguage?: true
   inputText?: true
   outputJson?: true
+  model?: true
   status?: true
   errorMessage?: true
   createdAt?: true
@@ -185,8 +197,10 @@ export type AIGenerationGroupByOutputType = {
   productId: string | null
   userId: string | null
   type: string
+  inputLanguage: string | null
   inputText: string | null
   outputJson: runtime.JsonValue | null
+  model: string | null
   status: string
   errorMessage: string | null
   createdAt: Date
@@ -220,8 +234,10 @@ export type AIGenerationWhereInput = {
   productId?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   userId?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   type?: Prisma.StringFilter<"AIGeneration"> | string
+  inputLanguage?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   inputText?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   outputJson?: Prisma.JsonNullableFilter<"AIGeneration">
+  model?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   status?: Prisma.StringFilter<"AIGeneration"> | string
   errorMessage?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIGeneration"> | Date | string
@@ -237,8 +253,10 @@ export type AIGenerationOrderByWithRelationInput = {
   productId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  inputLanguage?: Prisma.SortOrderInput | Prisma.SortOrder
   inputText?: Prisma.SortOrderInput | Prisma.SortOrder
   outputJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  model?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -257,8 +275,10 @@ export type AIGenerationWhereUniqueInput = Prisma.AtLeast<{
   productId?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   userId?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   type?: Prisma.StringFilter<"AIGeneration"> | string
+  inputLanguage?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   inputText?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   outputJson?: Prisma.JsonNullableFilter<"AIGeneration">
+  model?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   status?: Prisma.StringFilter<"AIGeneration"> | string
   errorMessage?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIGeneration"> | Date | string
@@ -274,8 +294,10 @@ export type AIGenerationOrderByWithAggregationInput = {
   productId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  inputLanguage?: Prisma.SortOrderInput | Prisma.SortOrder
   inputText?: Prisma.SortOrderInput | Prisma.SortOrder
   outputJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  model?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -294,8 +316,10 @@ export type AIGenerationScalarWhereWithAggregatesInput = {
   productId?: Prisma.StringNullableWithAggregatesFilter<"AIGeneration"> | string | null
   userId?: Prisma.StringNullableWithAggregatesFilter<"AIGeneration"> | string | null
   type?: Prisma.StringWithAggregatesFilter<"AIGeneration"> | string
+  inputLanguage?: Prisma.StringNullableWithAggregatesFilter<"AIGeneration"> | string | null
   inputText?: Prisma.StringNullableWithAggregatesFilter<"AIGeneration"> | string | null
   outputJson?: Prisma.JsonNullableWithAggregatesFilter<"AIGeneration">
+  model?: Prisma.StringNullableWithAggregatesFilter<"AIGeneration"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"AIGeneration"> | string
   errorMessage?: Prisma.StringNullableWithAggregatesFilter<"AIGeneration"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AIGeneration"> | Date | string
@@ -305,8 +329,10 @@ export type AIGenerationScalarWhereWithAggregatesInput = {
 export type AIGenerationCreateInput = {
   id?: string
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -322,8 +348,10 @@ export type AIGenerationUncheckedCreateInput = {
   productId?: string | null
   userId?: string | null
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -333,8 +361,10 @@ export type AIGenerationUncheckedCreateInput = {
 export type AIGenerationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -350,8 +380,10 @@ export type AIGenerationUncheckedUpdateInput = {
   productId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -364,8 +396,10 @@ export type AIGenerationCreateManyInput = {
   productId?: string | null
   userId?: string | null
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -375,8 +409,10 @@ export type AIGenerationCreateManyInput = {
 export type AIGenerationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -389,8 +425,10 @@ export type AIGenerationUncheckedUpdateManyInput = {
   productId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -413,8 +451,10 @@ export type AIGenerationCountOrderByAggregateInput = {
   productId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  inputLanguage?: Prisma.SortOrder
   inputText?: Prisma.SortOrder
   outputJson?: Prisma.SortOrder
+  model?: Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -427,7 +467,9 @@ export type AIGenerationMaxOrderByAggregateInput = {
   productId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  inputLanguage?: Prisma.SortOrder
   inputText?: Prisma.SortOrder
+  model?: Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -440,7 +482,9 @@ export type AIGenerationMinOrderByAggregateInput = {
   productId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  inputLanguage?: Prisma.SortOrder
   inputText?: Prisma.SortOrder
+  model?: Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -576,8 +620,10 @@ export type AIGenerationUncheckedUpdateManyWithoutProductNestedInput = {
 export type AIGenerationCreateWithoutUserInput = {
   id?: string
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -591,8 +637,10 @@ export type AIGenerationUncheckedCreateWithoutUserInput = {
   artisanId?: string | null
   productId?: string | null
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -634,8 +682,10 @@ export type AIGenerationScalarWhereInput = {
   productId?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   userId?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   type?: Prisma.StringFilter<"AIGeneration"> | string
+  inputLanguage?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   inputText?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   outputJson?: Prisma.JsonNullableFilter<"AIGeneration">
+  model?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   status?: Prisma.StringFilter<"AIGeneration"> | string
   errorMessage?: Prisma.StringNullableFilter<"AIGeneration"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIGeneration"> | Date | string
@@ -645,8 +695,10 @@ export type AIGenerationScalarWhereInput = {
 export type AIGenerationCreateWithoutArtisanInput = {
   id?: string
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -660,8 +712,10 @@ export type AIGenerationUncheckedCreateWithoutArtisanInput = {
   productId?: string | null
   userId?: string | null
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -697,8 +751,10 @@ export type AIGenerationUpdateManyWithWhereWithoutArtisanInput = {
 export type AIGenerationCreateWithoutProductInput = {
   id?: string
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -712,8 +768,10 @@ export type AIGenerationUncheckedCreateWithoutProductInput = {
   artisanId?: string | null
   userId?: string | null
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -751,8 +809,10 @@ export type AIGenerationCreateManyUserInput = {
   artisanId?: string | null
   productId?: string | null
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -762,8 +822,10 @@ export type AIGenerationCreateManyUserInput = {
 export type AIGenerationUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -777,8 +839,10 @@ export type AIGenerationUncheckedUpdateWithoutUserInput = {
   artisanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   productId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -790,8 +854,10 @@ export type AIGenerationUncheckedUpdateManyWithoutUserInput = {
   artisanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   productId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -803,8 +869,10 @@ export type AIGenerationCreateManyArtisanInput = {
   productId?: string | null
   userId?: string | null
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -814,8 +882,10 @@ export type AIGenerationCreateManyArtisanInput = {
 export type AIGenerationUpdateWithoutArtisanInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -829,8 +899,10 @@ export type AIGenerationUncheckedUpdateWithoutArtisanInput = {
   productId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -842,8 +914,10 @@ export type AIGenerationUncheckedUpdateManyWithoutArtisanInput = {
   productId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -855,8 +929,10 @@ export type AIGenerationCreateManyProductInput = {
   artisanId?: string | null
   userId?: string | null
   type: string
+  inputLanguage?: string | null
   inputText?: string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
   status?: string
   errorMessage?: string | null
   createdAt?: Date | string
@@ -866,8 +942,10 @@ export type AIGenerationCreateManyProductInput = {
 export type AIGenerationUpdateWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -881,8 +959,10 @@ export type AIGenerationUncheckedUpdateWithoutProductInput = {
   artisanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -894,8 +974,10 @@ export type AIGenerationUncheckedUpdateManyWithoutProductInput = {
   artisanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  inputLanguage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -910,8 +992,10 @@ export type AIGenerationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   productId?: boolean
   userId?: boolean
   type?: boolean
+  inputLanguage?: boolean
   inputText?: boolean
   outputJson?: boolean
+  model?: boolean
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
@@ -927,8 +1011,10 @@ export type AIGenerationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   productId?: boolean
   userId?: boolean
   type?: boolean
+  inputLanguage?: boolean
   inputText?: boolean
   outputJson?: boolean
+  model?: boolean
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
@@ -944,8 +1030,10 @@ export type AIGenerationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   productId?: boolean
   userId?: boolean
   type?: boolean
+  inputLanguage?: boolean
   inputText?: boolean
   outputJson?: boolean
+  model?: boolean
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
@@ -961,15 +1049,17 @@ export type AIGenerationSelectScalar = {
   productId?: boolean
   userId?: boolean
   type?: boolean
+  inputLanguage?: boolean
   inputText?: boolean
   outputJson?: boolean
+  model?: boolean
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AIGenerationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "artisanId" | "productId" | "userId" | "type" | "inputText" | "outputJson" | "status" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["aIGeneration"]>
+export type AIGenerationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "artisanId" | "productId" | "userId" | "type" | "inputLanguage" | "inputText" | "outputJson" | "model" | "status" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["aIGeneration"]>
 export type AIGenerationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   artisan?: boolean | Prisma.AIGeneration$artisanArgs<ExtArgs>
   product?: boolean | Prisma.AIGeneration$productArgs<ExtArgs>
@@ -999,8 +1089,10 @@ export type $AIGenerationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     productId: string | null
     userId: string | null
     type: string
+    inputLanguage: string | null
     inputText: string | null
     outputJson: runtime.JsonValue | null
+    model: string | null
     status: string
     errorMessage: string | null
     createdAt: Date
@@ -1436,8 +1528,10 @@ export interface AIGenerationFieldRefs {
   readonly productId: Prisma.FieldRef<"AIGeneration", 'String'>
   readonly userId: Prisma.FieldRef<"AIGeneration", 'String'>
   readonly type: Prisma.FieldRef<"AIGeneration", 'String'>
+  readonly inputLanguage: Prisma.FieldRef<"AIGeneration", 'String'>
   readonly inputText: Prisma.FieldRef<"AIGeneration", 'String'>
   readonly outputJson: Prisma.FieldRef<"AIGeneration", 'Json'>
+  readonly model: Prisma.FieldRef<"AIGeneration", 'String'>
   readonly status: Prisma.FieldRef<"AIGeneration", 'String'>
   readonly errorMessage: Prisma.FieldRef<"AIGeneration", 'String'>
   readonly createdAt: Prisma.FieldRef<"AIGeneration", 'DateTime'>

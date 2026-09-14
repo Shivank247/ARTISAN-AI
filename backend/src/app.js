@@ -4,6 +4,12 @@ import cors from "cors";
 import env from "./config/env.js";
 import prisma from "./utils/prisma.js";
 import { successResponse } from "./utils/response.js";
+import authRoutes from "./routes/authRoutes.js";
+import artisanRoutes from "./routes/artisanRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import {
   notFoundMiddleware,
   errorMiddleware,
@@ -47,6 +53,13 @@ app.get("/api/health", async (req, res, next) => {
     return next(error);
   }
 });
+
+app.use("/api/auth", authRoutes);
+app.use("/api/artisans", artisanRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use(notFoundMiddleware);
 

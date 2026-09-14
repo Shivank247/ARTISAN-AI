@@ -529,7 +529,62 @@ Response:
 
 ---
 
-# 11. AI NATURAL-LANGUAGE SEARCH
+# 11. AI PRICE RECOMMENDATION
+
+## POST /ai/recommend-price
+
+Authentication required. ARTISAN role required.
+
+Request:
+
+{
+"category": "pottery",
+"material": "clay",
+"productionTimeDays": 5,
+"location": "Bihar"
+}
+
+The response contains `suggestedPrice`, `priceRange`, `reason`, and `confidence`.
+The artisan's final product price remains authoritative.
+
+---
+
+# 12. REVIEWS
+
+## GET /products/:id/reviews
+
+Public endpoint. Returns reviews for a published product.
+
+## POST /products/:id/reviews
+
+Authentication required. CUSTOMER role required.
+
+Request:
+
+{
+"rating": 5,
+"comment": "Beautiful handmade work."
+}
+
+Each customer may review a product once. Ratings must be integers from 1 to 5.
+
+---
+
+# 13. ADMIN ORDER STATUS
+
+## PATCH /orders/:id/status
+
+Authentication required. ADMIN role required.
+
+Request:
+
+{
+"status": "CONFIRMED"
+}
+
+---
+
+# 14. AI NATURAL-LANGUAGE SEARCH
 
 ## POST /ai/search
 
@@ -579,7 +634,7 @@ Customer query
 
 ---
 
-# 12. ORDERS
+# 15. ORDERS
 
 ## POST /orders
 

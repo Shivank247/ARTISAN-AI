@@ -152,8 +152,11 @@ Recommended tags representation:
 
 String array if supported by the selected PostgreSQL/Prisma implementation.
 
+The current Prisma implementation uses `String[]` with an empty-array default.
+
 If implementation constraints require another representation, coordinate the change before implementation.
 
+inputLanguage
 ---
 
 # 6. PRODUCT STATUS

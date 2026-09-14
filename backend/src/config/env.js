@@ -23,6 +23,8 @@ const env = {
 
   aiApiKey: process.env.AI_API_KEY || "",
 
+  aiServiceUrl: process.env.AI_SERVICE_URL || "",
+
   sttApiKey: process.env.STT_API_KEY || "",
 
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
