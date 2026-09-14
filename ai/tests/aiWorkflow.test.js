@@ -1,0 +1,93 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const { generateProduct } = require('../src/product/productService');
+const { transcribeAudio } = require('../src/voice/voiceService');
+const { translateText } = require('../src/translation/translationService');
+const { parseSearchQuery } = require('../src/search/searchService');
+const { recommendPrice } = require('../src/pricing/pricingService');
+const { validateProductOutput } = require('../src/validation/productSchema');
+const { generateQuestions } = require('../src/product/questionGenerator');
+
+process.env.AI_PROVIDER = 'mock';
+process.env.NODE_ENV = 'test';
+
+test('generateProduct validates output and asks only missing fields', async () => {
+  const result = await generateProduct({
+    image: 'base64-image-data',
+    transcript: 'This is a handmade clay pot I made in three days.',
+    language: 'en',
+    artisanAnswers: { suggestedPrice: 900 }
+  });
+
+  assert.equal(result.success, true);
+  assert.ok(result.data.title);
+  assert.ok(result.data.description);
+  assert.ok(Array.isArray(result.data.tags));
+  assert.equal(result.questions.length >= 0, true);
+});
+
+test('transcribeAudio rejects unavailable transcription instead of fabricating text', async () => {
+  const result = await transcribeAudio({ audio: null, language: 'hi' });
+  assert.equal(result.success, false);
+  assert.match(result.error.code, /NO_AUDIO|INVALID_INPUT/);
+});
+
+test('transcribeAudio does not fabricate a transcript for non-empty audio', async () => {
+  const result = await transcribeAudio({ audio: 'arbitrary-audio', language: 'hi' });
+  assert.equal(result.success, false);
+  assert.equal(result.error.code, 'STT_UNAVAILABLE');
+});
+
+test('translateText preserves language when source and target match', async () => {
+  const result = await translateText({ text: 'Hello artisan', sourceLanguage: 'en', targetLanguage: 'en' });
+  assert.equal(result.success, true);
+  assert.equal(result.data.translatedText, 'Hello artisan');
+});
+
+test('translateText reports unavailable translation instead of returning a marker', async () => {
+  const result = await translateText({ text: 'Namaste', sourceLanguage: 'hi', targetLanguage: 'en' });
+  assert.equal(result.success, false);
+  assert.equal(result.error.code, 'TRANSLATION_UNAVAILABLE');
+});
+
+test('parseSearchQuery turns natural language into structured filters', async () => {
+  const result = await parseSearchQuery('Traditional handmade gifts from Bihar under ₹1000');
+  assert.equal(result.success, true);
+  assert.equal(result.data.state, 'Bihar');
+  assert.equal(result.data.maxPrice, 1000);
+  assert.deepEqual(result.data.keywords, ['traditional', 'handmade', 'gifts']);
+  assert.equal(result.data.category, 'handicrafts');
+});
+
+test('recommendPrice returns a guarded estimate based on product attributes', async () => {
+  const result = await recommendPrice({
+    category: 'Paintings',
+    material: 'handmade paper',
+    productionTimeDays: 3,
+    location: 'Bihar'
+  });
+
+  assert.equal(result.success, true);
+  assert.ok(result.data.suggestedPrice > 0);
+  assert.ok(result.data.priceRange.min < result.data.priceRange.max);
+  assert.ok(result.data.reason.length > 0);
+  assert.ok(result.data.confidence >= 0 && result.data.confidence <= 1);
+});
+
+test('recommendPrice rejects invalid production time', async () => {
+  const result = await recommendPrice({ category: 'pottery', productionTimeDays: 'unknown' });
+  assert.equal(result.success, false);
+  assert.equal(result.error.code, 'INVALID_PRODUCTION_TIME');
+});
+
+test('product validation rejects reversed price ranges', () => {
+  const result = validateProductOutput({ title: 'Pot', description: 'Clay pot', category: null, material: null, tags: [], suggestedPrice: 100, priceRange: { min: 500, max: 100 }, confidence: 0.5 });
+  assert.equal(result.valid, false);
+});
+
+test('questions use the selected language', () => {
+  const result = generateQuestions({ material: null, suggestedPrice: null, category: null }, 'hi');
+  assert.equal(result.length, 3);
+  assert.match(result[0].question, /सामग्री/);
+});

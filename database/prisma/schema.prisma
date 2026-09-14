@@ -1,0 +1,184 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../../backend/src/generated/prisma"
+  moduleFormat = "esm"
+}
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ARTISAN
+  CUSTOMER
+  ADMIN
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String   @unique
+  passwordHash String
+  role         UserRole @default(CUSTOMER)
+  language     String   @default("en")
+
+  artisan     Artisan?
+  orders      Order[]
+  reviews     Review[]
+  generations AIGeneration[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+}
+
+model Artisan {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products    Product[]
+  generations AIGeneration[]
+
+  craftType String?
+  city      String?
+  state     String?
+  latitude  Float?
+  longitude Float?
+  story     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([state])
+  @@index([city])
+}
+
+model Product {
+  id        String @id @default(cuid())
+  artisanId String
+
+  artisan     Artisan        @relation(fields: [artisanId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  reviews     Review[]
+  generations AIGeneration[]
+
+  title              String
+  description        String
+  category           String
+  material           String
+  tags               String[]       @default([])
+  price              Int
+  currency           String        @default("INR")
+  imageUrl           String?
+  city               String?
+  state              String?
+  productionTimeDays Int?
+  status             ProductStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([state])
+  @@index([price])
+  @@index([artisanId])
+}
+
+model Order {
+  id         String  @id @default(cuid())
+  customerId String?
+
+  customer User?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items    OrderItem[]
+
+  customerName String
+  phone        String
+  address      String
+  status       OrderStatus @default(PLACED)
+  totalAmount  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  quantity  Int
+  unitPrice Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([orderId, productId])
+  @@index([productId])
+}
+
+model Review {
+  id        String @id @default(cuid())
+  productId String
+  userId    String
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating  Int
+  comment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, userId])
+  @@index([productId])
+  @@index([userId])
+}
+
+model AIGeneration {
+  id        String  @id @default(cuid())
+  artisanId String?
+  productId String?
+  userId    String?
+
+  artisan Artisan? @relation(fields: [artisanId], references: [id], onDelete: SetNull)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  type         String
+  inputLanguage String?
+  inputText    String?
+  outputJson   Json?
+  model        String?
+  status       String  @default("SUCCESS")
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([artisanId])
+  @@index([productId])
+  @@index([userId])
+  @@index([type])
+}
