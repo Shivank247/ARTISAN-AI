@@ -6,12 +6,12 @@ Core flow:
 Photo + Voice → AI Understanding → Questions → Catalogue → Price Assistance → Artisan Approval → Marketplace → Customer Order
 
 ## Team
-- Shivank — Team Lead, Git, Architecture, Integration, Deployment, Final Testing
+- Shivani kumari — Team Lead, Git, Architecture, Integration, Deployment, Final Testing
 - Namita — Frontend + UI/UX
-- Mayank — Backend + Database
-- Suraj — Core AI
-- Shiva — Voice + Language AI
-- Shivani — AI Search + Pricing
+- karan — Backend + Database
+  
+  shivank singh  — Voice + Language AI
+- Shivank— AI Search + Pricing
 
 ## Shared contracts
 - docs/API_CONTRACT.md
