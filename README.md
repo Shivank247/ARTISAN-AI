@@ -10,8 +10,7 @@ Photo + Voice → AI Understanding → Questions → Catalogue → Price Assista
 - Namita — Frontend + UI/UX
 - karan — Backend + Database
   
-  shivank singh  — Voice + Language AI
-- Shivank— AI Search + Pricing
+  Shivank Singh  — Voice + Language AI + AI Search + Pricing
 
 ## Shared contracts
 - docs/API_CONTRACT.md
