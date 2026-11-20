@@ -35,6 +35,10 @@ const env = {
 
   jwtSecret: process.env.JWT_SECRET,
 
+  // Vercel production frontend; can be overridden in Render.
+  frontendUrl:
+    process.env.FRONTEND_URL || "https://artisan-ai-xi.vercel.app",
+
   aiProvider: process.env.AI_PROVIDER || "",
 
   aiApiKey: process.env.AI_API_KEY || "",
