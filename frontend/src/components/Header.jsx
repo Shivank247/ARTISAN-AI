@@ -1,3 +1,4 @@
+import { BRAND_NAME } from "../config/brand";
 import "./Header.css";
 
 const languageNames = {
@@ -9,19 +10,36 @@ const languageNames = {
   Marathi: "मराठी",
 };
 
-function Header({ language = "English" }) {
+function Header({ language = "English", onHome }) {
+  const brand = (
+    <>
+      <span className="header-logo-icon" aria-hidden="true">
+        ✦
+      </span>
+
+      <span className="header-logo-text">{BRAND_NAME}</span>
+    </>
+  );
+
   return (
     <header className="app-header">
-      <div className="header-logo">
-        <span className="header-logo-icon">✦</span>
-
-        <span className="header-logo-text">
-          Karigar AI
-        </span>
-      </div>
+      {onHome ? (
+        <button
+          type="button"
+          className="header-logo header-logo-button"
+          onClick={onHome}
+          aria-label={`${BRAND_NAME} — back to home`}
+        >
+          {brand}
+        </button>
+      ) : (
+        <div className="header-logo">{brand}</div>
+      )}
 
       <div className="header-language">
-        <span className="header-language-icon">🌐</span>
+        <span className="header-language-icon" aria-hidden="true">
+          🌐
+        </span>
 
         <span>
           {languageNames[language] || "English"}

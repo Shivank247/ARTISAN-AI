@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import "./App.css";
 
@@ -5,6 +6,9 @@ import CustomerHome from "./pages/customer/CustomerHome";
 import ProductDetails from "./pages/customer/ProductDetails";
 import Cart from "./pages/customer/Cart";
 import Checkout from "./pages/customer/Checkout";
+
+import LanguageSelect from "./pages/language/LanguageSelect";
+import LandingPage from "./pages/landing/LandingPage";
 
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -53,12 +57,19 @@ function App() {
 
   /*
    * Persistent customer cart.
-   *
-   * The actual cart data is stored in localStorage
-   * for the currently logged-in customer.
    */
   const [cartItems, setCartItems] =
     useState([]);
+
+  /*
+   * Identifies which customer's cart is currently
+   * loaded into React state.
+   *
+   * Prevents one customer's cart from being saved
+   * into another customer's localStorage key.
+   */
+  const [cartOwnerKey, setCartOwnerKey] =
+    useState(null);
 
   const [isCreatingProduct, setIsCreatingProduct] =
     useState(false);
@@ -90,23 +101,26 @@ function App() {
   };
 
   /*
-   * Load the customer's saved cart whenever
-   * the logged-in customer changes.
+   * Initialize the user session and load the
+   * appropriate customer cart.
+   *
+   * This runs from login/registration event handlers,
+   * not from a React effect.
    */
-  useEffect(() => {
-    if (
-      !currentUser ||
-      currentUser.role !== "CUSTOMER"
-    ) {
+  const initializeUserSession = (user) => {
+    if (!user || user.role !== "CUSTOMER") {
       setCartItems([]);
+      setCartOwnerKey(null);
+      setCurrentUser(user);
       return;
     }
 
-    const storageKey =
-      getCartStorageKey(currentUser);
+    const storageKey = getCartStorageKey(user);
 
     if (!storageKey) {
       setCartItems([]);
+      setCartOwnerKey(null);
+      setCurrentUser(user);
       return;
     }
 
@@ -114,19 +128,17 @@ function App() {
       const savedCart =
         localStorage.getItem(storageKey);
 
-      if (!savedCart) {
-        setCartItems([]);
-        return;
-      }
+      const parsedCart = savedCart
+        ? JSON.parse(savedCart)
+        : [];
 
-      const parsedCart =
-        JSON.parse(savedCart);
+      setCartItems(
+        Array.isArray(parsedCart)
+          ? parsedCart
+          : []
+      );
 
-      if (Array.isArray(parsedCart)) {
-        setCartItems(parsedCart);
-      } else {
-        setCartItems([]);
-      }
+      setCartOwnerKey(storageKey);
     } catch (error) {
       console.error(
         "Unable to load saved cart:",
@@ -134,11 +146,17 @@ function App() {
       );
 
       setCartItems([]);
+      setCartOwnerKey(storageKey);
     }
-  }, [currentUser]);
+
+    setCurrentUser(user);
+  };
 
   /*
    * Save the customer's cart whenever it changes.
+   *
+   * Only save when the cart belongs to the
+   * currently logged-in customer.
    */
   useEffect(() => {
     if (
@@ -151,7 +169,10 @@ function App() {
     const storageKey =
       getCartStorageKey(currentUser);
 
-    if (!storageKey) {
+    if (
+      !storageKey ||
+      cartOwnerKey !== storageKey
+    ) {
       return;
     }
 
@@ -166,7 +187,7 @@ function App() {
         error
       );
     }
-  }, [cartItems, currentUser]);
+  }, [cartItems, currentUser, cartOwnerKey]);
 
   /*
    * LOGIN
@@ -185,7 +206,7 @@ function App() {
     console.log("Logged in user:", user);
     console.log("User role:", user.role);
 
-    setCurrentUser(user);
+    initializeUserSession(user);
 
     /*
      * CUSTOMER
@@ -221,7 +242,7 @@ function App() {
     const user = response?.data?.user;
 
     if (user) {
-      setCurrentUser(user);
+      initializeUserSession(user);
     }
 
     setCurrentPage("onboarding");
@@ -265,9 +286,7 @@ function App() {
    * Creates the AI-generated product as a DRAFT
    * before moving to price recommendation.
    */
-  const handleProductApproval = async (
-    data
-  ) => {
+  const handleProductApproval = async (data) => {
     setProductError("");
     setIsCreatingProduct(true);
 
@@ -301,9 +320,7 @@ function App() {
         productionTimeDays: 1,
 
         price:
-          Number.isInteger(
-            data.suggestedPrice
-          ) &&
+          Number.isInteger(data.suggestedPrice) &&
           data.suggestedPrice > 0
             ? data.suggestedPrice
             : 1,
@@ -312,9 +329,7 @@ function App() {
       };
 
       const response =
-        await createProduct(
-          productPayload
-        );
+        await createProduct(productPayload);
 
       const savedProduct =
         response.data;
@@ -338,53 +353,40 @@ function App() {
   /*
    * CUSTOMER PRODUCT DETAILS
    */
-  const handleProductClick = (
-    product
-  ) => {
+  const handleProductClick = (product) => {
     setSelectedProduct(product);
     setCurrentPage("product-details");
   };
 
   /*
    * ADD TO CART
-   *
-   * Updates React state.
-   * The useEffect above automatically persists
-   * the updated cart into localStorage.
    */
-  const handleAddToCart = (
-    product
-  ) => {
-    setCartItems(
-      (currentItems) => {
-        const existingItem =
-          currentItems.find(
-            (item) =>
-              item.id === product.id
-          );
+  const handleAddToCart = (product) => {
+    setCartItems((currentItems) => {
+      const existingItem =
+        currentItems.find(
+          (item) => item.id === product.id
+        );
 
-        if (existingItem) {
-          return currentItems.map(
-            (item) =>
-              item.id === product.id
-                ? {
-                    ...item,
-                    quantity:
-                      item.quantity + 1,
-                  }
-                : item
-          );
-        }
-
-        return [
-          ...currentItems,
-          {
-            ...product,
-            quantity: 1,
-          },
-        ];
+      if (existingItem) {
+        return currentItems.map((item) =>
+          item.id === product.id
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+              }
+            : item
+        );
       }
-    );
+
+      return [
+        ...currentItems,
+        {
+          ...product,
+          quantity: 1,
+        },
+      ];
+    });
 
     setCurrentPage("cart");
   };
@@ -392,15 +394,11 @@ function App() {
   /*
    * REMOVE FROM CART
    */
-  const handleRemoveFromCart = (
-    productId
-  ) => {
-    setCartItems(
-      (currentItems) =>
-        currentItems.filter(
-          (item) =>
-            item.id !== productId
-        )
+  const handleRemoveFromCart = (productId) => {
+    setCartItems((currentItems) =>
+      currentItems.filter(
+        (item) => item.id !== productId
+      )
     );
   };
 
@@ -415,41 +413,33 @@ function App() {
       return;
     }
 
-    setCartItems(
-      (currentItems) =>
-        currentItems.map(
-          (item) =>
-            item.id === productId
-              ? {
-                  ...item,
-                  quantity:
-                    newQuantity,
-                }
-              : item
-        )
+    setCartItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === productId
+          ? {
+              ...item,
+              quantity: newQuantity,
+            }
+          : item
+      )
     );
   };
 
   /*
    * ORDER PLACED
    *
-   * Clear the cart from both React state
-   * and persistent localStorage after
-   * successful checkout.
+   * Clear the cart from React state and
+   * persistent localStorage after checkout.
    */
   const handleOrderPlaced = () => {
     setCartItems([]);
 
     if (currentUser) {
       const storageKey =
-        getCartStorageKey(
-          currentUser
-        );
+        getCartStorageKey(currentUser);
 
       if (storageKey) {
-        localStorage.removeItem(
-          storageKey
-        );
+        localStorage.removeItem(storageKey);
       }
     }
 
@@ -464,13 +454,12 @@ function App() {
     return (
       <Login
         language={selectedLanguage}
-        onLoginSuccess={
-          handleLoginSuccess
-        }
+        onLoginSuccess={handleLoginSuccess}
         onShowRegister={() =>
-          setCurrentPage(
-            "register"
-          )
+          setCurrentPage("register")
+        }
+        onHome={() =>
+          setCurrentPage("landing")
         }
       />
     );
@@ -483,9 +472,7 @@ function App() {
     return (
       <Register
         language={selectedLanguage}
-        onRegisterSuccess={
-          handleRegisterSuccess
-        }
+        onRegisterSuccess={handleRegisterSuccess}
         onShowLogin={() =>
           setCurrentPage("login")
         }
@@ -500,9 +487,7 @@ function App() {
     return (
       <Onboarding
         language={selectedLanguage}
-        onComplete={
-          handleOnboardingComplete
-        }
+        onComplete={handleOnboardingComplete}
       />
     );
   }
@@ -526,38 +511,21 @@ function App() {
 
   /*
    * ARTISAN PRODUCT UPLOAD
-   *
-   * UploadProduct returns:
-   * {
-   *   imageUrl,
-   *   mimeType,
-   *   inputText,
-   *   language
-   * }
    */
   if (currentPage === "upload") {
     return (
       <UploadProduct
         onBack={() =>
-          setCurrentPage(
-            "dashboard"
-          )
+          setCurrentPage("dashboard")
         }
-        onContinue={(
-          productInput
-        ) => {
+        onContinue={(productInput) => {
           console.log(
             "Product input received:",
             productInput
           );
 
-          setProductImage(
-            productInput
-          );
-
-          setCurrentPage(
-            "catalogue"
-          );
+          setProductImage(productInput);
+          setCurrentPage("catalogue");
         }}
       />
     );
@@ -565,12 +533,6 @@ function App() {
 
   /*
    * AI CATALOGUE
-   *
-   * The AI receives:
-   * - Product image
-   * - Artisan profile
-   * - Selected language
-   * - Real voice transcript
    */
   if (currentPage === "catalogue") {
     return (
@@ -580,7 +542,6 @@ function App() {
         }
         productData={{
           image: productImage,
-
           artisan: artisanData,
 
           language:
@@ -600,12 +561,8 @@ function App() {
             "image/jpeg",
         }}
         onGenerated={(data) => {
-          setGeneratedProduct(
-            data
-          );
-          setCurrentPage(
-            "review"
-          );
+          setGeneratedProduct(data);
+          setCurrentPage("review");
         }}
       />
     );
@@ -618,17 +575,11 @@ function App() {
     return (
       <>
         <ReviewProduct
-          productData={
-            generatedProduct
-          }
+          productData={generatedProduct}
           onBack={() =>
-            setCurrentPage(
-              "catalogue"
-            )
+            setCurrentPage("catalogue")
           }
-          onApprove={
-            handleProductApproval
-          }
+          onApprove={handleProductApproval}
         />
 
         {isCreatingProduct && (
@@ -658,19 +609,10 @@ function App() {
         onBack={() =>
           setCurrentPage("review")
         }
-        productData={
-          generatedProduct
-        }
-        onPriceSaved={(
-          updatedProduct
-        ) => {
-          setGeneratedProduct(
-            updatedProduct
-          );
-
-          setCurrentPage(
-            "dashboard"
-          );
+        productData={generatedProduct}
+        onPriceSaved={(updatedProduct) => {
+          setGeneratedProduct(updatedProduct);
+          setCurrentPage("dashboard");
         }}
       />
     );
@@ -682,9 +624,7 @@ function App() {
   if (currentPage === "customer") {
     return (
       <CustomerHome
-        onProductClick={
-          handleProductClick
-        }
+        onProductClick={handleProductClick}
         onCart={() =>
           setCurrentPage("cart")
         }
@@ -700,23 +640,14 @@ function App() {
   /*
    * CUSTOMER PRODUCT DETAILS
    */
-  if (
-    currentPage ===
-    "product-details"
-  ) {
+  if (currentPage === "product-details") {
     return (
       <ProductDetails
-        product={
-          selectedProduct
-        }
+        product={selectedProduct}
         onBack={() =>
-          setCurrentPage(
-            "customer"
-          )
+          setCurrentPage("customer")
         }
-        onAddToCart={
-          handleAddToCart
-        }
+        onAddToCart={handleAddToCart}
       />
     );
   }
@@ -729,20 +660,12 @@ function App() {
       <Cart
         cartItems={cartItems}
         onBack={() =>
-          setCurrentPage(
-            "customer"
-          )
+          setCurrentPage("customer")
         }
-        onRemove={
-          handleRemoveFromCart
-        }
-        onQuantityChange={
-          handleQuantityChange
-        }
+        onRemove={handleRemoveFromCart}
+        onQuantityChange={handleQuantityChange}
         onCheckout={() =>
-          setCurrentPage(
-            "checkout"
-          )
+          setCurrentPage("checkout")
         }
       />
     );
@@ -751,18 +674,14 @@ function App() {
   /*
    * CUSTOMER CHECKOUT
    */
-  if (
-    currentPage === "checkout"
-  ) {
+  if (currentPage === "checkout") {
     return (
       <Checkout
         cartItems={cartItems}
         onBack={() =>
           setCurrentPage("cart")
         }
-        onOrderPlaced={
-          handleOrderPlaced
-        }
+        onOrderPlaced={handleOrderPlaced}
       />
     );
   }
@@ -775,105 +694,38 @@ function App() {
   }
 
   /*
-   * LANGUAGE SELECTION
+   * PUBLIC LANDING PAGE
+   *
+   * Flow: Language -> Landing -> Login / Register
    */
-  const languages = [
-    {
-      name: "English",
-      native: "English",
-      icon: "🇬🇧",
-    },
-    {
-      name: "Hindi",
-      native: "हिंदी",
-      icon: "🇮🇳",
-    },
-    {
-      name: "Bengali",
-      native: "বাংলা",
-      icon: "🇮🇳",
-    },
-    {
-      name: "Tamil",
-      native: "தமிழ்",
-      icon: "🇮🇳",
-    },
-    {
-      name: "Telugu",
-      native: "తెలుగు",
-      icon: "🇮🇳",
-    },
-    {
-      name: "Marathi",
-      native: "मराठी",
-      icon: "🇮🇳",
-    },
-  ];
+  if (currentPage === "landing") {
+    return (
+      <LandingPage
+        language={selectedLanguage}
+        onLogin={() =>
+          setCurrentPage("login")
+        }
+        onRegister={() =>
+          setCurrentPage("register")
+        }
+        onChangeLanguage={() =>
+          setCurrentPage("language")
+        }
+      />
+    );
+  }
 
+  /*
+   * LANGUAGE SELECTION (initial page)
+   */
   return (
-    <div className="app">
-      <div className="language-card">
-        <div className="logo">
-          <span>✦</span>
-          <h1>Karigar AI</h1>
-        </div>
-
-        <div className="welcome-section">
-          <h2>Welcome! 👋</h2>
-
-          <p>
-            Select your preferred
-            language to continue
-          </p>
-        </div>
-
-        <div className="language-grid">
-          {languages.map(
-            (language) => (
-              <button
-                key={
-                  language.name
-                }
-                type="button"
-                className={`language-btn ${
-                  selectedLanguage ===
-                  language.name
-                    ? "selected"
-                    : ""
-                }`}
-                onClick={() => {
-                  setSelectedLanguage(
-                    language.name
-                  );
-
-                  setCurrentPage(
-                    "login"
-                  );
-                }}
-              >
-                <span className="flag">
-                  {language.icon}
-                </span>
-
-                <div className="language-text">
-                  <strong>
-                    {
-                      language.native
-                    }
-                  </strong>
-
-                  <small>
-                    {
-                      language.name
-                    }
-                  </small>
-                </div>
-              </button>
-            )
-          )}
-        </div>
-      </div>
-    </div>
+    <LanguageSelect
+      selectedLanguage={selectedLanguage}
+      onSelect={(languageName) => {
+        setSelectedLanguage(languageName);
+        setCurrentPage("landing");
+      }}
+    />
   );
 }
 

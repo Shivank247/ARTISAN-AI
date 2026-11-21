@@ -173,6 +173,7 @@ function Login({
   language = "English",
   onLoginSuccess,
   onShowRegister,
+  onHome,
 }) {
   const [formData, setFormData] = useState({
     phone: "",
@@ -219,7 +220,7 @@ function Login({
 
   return (
     <div className="auth-page">
-      <Header language={language} />
+      <Header language={language} onHome={onHome} />
 
       <main className="auth-main">
         {/* Left Side */}
