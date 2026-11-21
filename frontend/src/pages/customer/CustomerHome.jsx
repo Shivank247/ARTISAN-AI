@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import "./CustomerHome.css";
+
+const CraftScene = lazy(() => import("../../components/CraftScene"));
 import {
   getOrders,
   getProducts,
@@ -185,12 +187,103 @@ function CustomerHome({
    * every keystroke. AI search happens when the
    * customer presses Enter.
    */
+  // Initial products load.
+  // Keep this request inside the effect instead of calling loadProducts()
+  // directly, so the effect does not synchronously trigger state updates.
   useEffect(() => {
-    loadProducts("", "");
+    let cancelled = false;
+
+    const fetchInitialProducts = async () => {
+      try {
+        const response = await getProducts({ search: "" });
+
+        const productList = Array.isArray(
+          response?.data?.products
+        )
+          ? response.data.products
+          : [];
+
+        if (!cancelled) {
+          setProducts(productList);
+          setError("");
+          setAiSearchActive(false);
+          setInterpretedFilters(null);
+        }
+      } catch (err) {
+        console.error("Customer products error:", err);
+
+        if (!cancelled) {
+          setProducts([]);
+          setError(
+            err.message ||
+              "Unable to load products. Please try again."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchInitialProducts();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  // Initial orders load.
   useEffect(() => {
-    loadOrders();
+    let cancelled = false;
+
+    const fetchInitialOrders = async () => {
+      // Yield before checking the token or updating state.
+      await Promise.resolve();
+
+      if (cancelled) return;
+
+      const token = localStorage.getItem("authToken");
+
+      if (!token) {
+        setOrders([]);
+        setOrdersLoading(false);
+        return;
+      }
+
+      try {
+        const response = await getOrders();
+
+        const orderList = Array.isArray(response?.data)
+          ? response.data
+          : [];
+
+        if (!cancelled) {
+          setOrders(orderList);
+          setOrdersError("");
+        }
+      } catch (err) {
+        console.error("Customer orders error:", err);
+
+        if (!cancelled) {
+          setOrders([]);
+          setOrdersError(
+            err.message ||
+              "Unable to load your orders."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setOrdersLoading(false);
+        }
+      }
+    };
+
+    fetchInitialOrders();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSearchSubmit = async (
@@ -446,11 +539,10 @@ function CustomerHome({
           </p>
         </div>
 
-        <div
-          className="hero-art"
-          aria-hidden="true"
-        >
-          🎨
+        <div className="hero-art" aria-hidden="true">
+          <Suspense fallback={<div className="craft-loading">✦</div>}>
+            <CraftScene />
+          </Suspense>
         </div>
       </section>
 

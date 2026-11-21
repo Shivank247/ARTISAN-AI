@@ -1,0 +1,121 @@
+
+/* ========================================
+   CRAFT SCENE — 3D VASE CONTAINER
+======================================== */
+
+.craft-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 220px;
+  min-height: 280px;
+
+  overflow: hidden;
+  isolation: isolate;
+
+  display: grid;
+  place-items: center;
+
+  background: radial-gradient(
+    circle at 50% 48%,
+    rgba(185, 103, 73, 0.18),
+    transparent 70%
+  );
+}
+
+/* ========================================
+   THREE.JS CANVAS
+======================================== */
+
+.craft-scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ========================================
+   FALLBACK VASE
+   Displayed when WebGL initialization fails
+======================================== */
+
+.craft-scene-fallback {
+  display: grid;
+  place-items: center;
+}
+
+.craft-fallback-vase {
+  position: relative;
+
+  width: 125px;
+  height: 210px;
+
+  border-radius: 44% 44% 34% 34% / 25% 25% 18% 18%;
+
+  background: linear-gradient(
+    100deg,
+    #713b2e,
+    #bd7652 48%,
+    #7c4131
+  );
+
+  box-shadow:
+    inset 12px 0 20px rgba(255, 220, 170, 0.12),
+    0 24px 55px rgba(32, 56, 46, 0.2);
+
+  animation: craft-fallback-float 5s ease-in-out infinite;
+}
+
+/* Gold rim on the vase */
+
+.craft-fallback-vase::before {
+  content: "";
+
+  position: absolute;
+  top: -5px;
+  left: 40px;
+
+  width: 45px;
+  height: 17px;
+
+  border: 4px solid #b89559;
+  border-radius: 50%;
+}
+
+/* ========================================
+   FALLBACK VASE ANIMATION
+======================================== */
+
+@keyframes craft-fallback-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+======================================== */
+
+@media (max-width: 600px) {
+  .craft-scene {
+    min-height: 250px;
+  }
+
+  .craft-fallback-vase {
+    transform: scale(0.85);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY — REDUCED MOTION
+======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .craft-fallback-vase {
+    animation: none;
+  }
+}
